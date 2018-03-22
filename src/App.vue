@@ -3,10 +3,20 @@
   <md-toolbar>
     <h1 class="md-title">Group Studio</h1>
   </md-toolbar>
+    <md-dialog v-if="groupSelected" :md-active.sync="showChart">
+        <md-dialog-title>Select group : {{bimobjectSelected.name}}
+        </md-dialog-title>
+        <md-dialog-content>
+          <Chart :data="chardata" />
+        </md-dialog-content>
+        <md-dialog-actions>
+          <md-button class="md-primary" @click="showDialog = false">Close</md-button>
+        </md-dialog-actions>
+    </md-dialog>
+
 
     <md-dialog v-if="groupSelected" :md-fullscreen=false :md-active.sync="showDialog">
         <md-dialog-title>Select group : {{bimobjectSelected.name}}
-
         </md-dialog-title>
         <md-dialog-content>
           <md-list>
@@ -33,26 +43,36 @@
       <md-list-item v-for="group in groupLst" v-bind:key="group.id" md-expand>
         <md-icon>label</md-icon>
         <span class="md-list-item-text">{{group.name}}</span>
-        <md-list slot="md-expand">
+        <md-button class="md-icon-button md-list-action" v-on:click.stop="clicShowChart(group)">
+          <md-icon>pie_chart</md-icon>
+        </md-button>
 
+        <md-list slot="md-expand">
           <md-list-item class="md-inset" md-expand>
             <md-icon :style="getColor(group.referencial)">label_outline</md-icon>
             <span class="md-list-item-text">{{group.referencial.name}}</span>
+            <md-field class="search-bar" md-inline md-clearable>
+              <label>Search</label>
+              <md-input v-model="group.search" v-on:click.stop></md-input>
+            </md-field>
             <md-list slot="md-expand">
-              <md-list-item class="md-inset spinal-inset2" v-for="bimobject in group.referencial.allObject" v-bind:key="bimobject.id"
+              <md-list-item class="md-inset spinal-inset2" v-for="bimobject in filteredSubGrp(group.referencial.allObject, group.search)" v-bind:key="bimobject.id"
               @click="clicItem(group, bimobject)">
                 <md-icon :style="getColorById(group, bimobject)">turned_in</md-icon>
-                <span class="md-list-item-text">{{bimobject.name}}</span>
+                <span class="md-list-item-text">{{bimobject.dbId}} - {{bimobject.name}}</span>
               </md-list-item>
             </md-list>
           </md-list-item>
 
-
           <md-list-item class="md-inset" v-for="subgroup in group.group" v-bind:key="subgroup.id" md-expand>
             <md-icon :style="getColor(subgroup)">label_outline</md-icon>
             <span class="md-list-item-text">{{subgroup.name}}</span>
+            <md-field class="search-bar" md-inline md-clearable>
+              <label>Search</label>
+              <md-input v-model="subgroup.search" v-on:click.stop></md-input>
+            </md-field>
             <md-list slot="md-expand">
-              <md-list-item class="md-inset spinal-inset2" v-for="bimobject in subgroup.allObject" v-bind:key="bimobject.id"
+              <md-list-item class="md-inset spinal-inset2" v-for="bimobject in filteredSubGrp(subgroup.allObject, subgroup.search)" v-bind:key="bimobject.id"
               @click="clicItem(group, bimobject)">
                 <md-icon :style="getColor(subgroup)">turned_in</md-icon>
                 <span class="md-list-item-text">{{bimobject.name}}</span>
@@ -67,6 +87,7 @@
 
 <script>
 import spinal from "./SpinalObject.js";
+import Chart from "./chart.vue";
 
 function getSelectedGrpModel(groupSelected, model) {
   for (var i = 0; i < model.length; i++) {
@@ -91,7 +112,18 @@ export default {
       groupSelected: null,
       bimobjectSelected: { name: "", color: "" },
       showDialog: false,
+      showChart: false,
       groupLst: [],
+      chardata:{
+        labels: [],
+        datasets: [
+          {
+            borderWidth: 0,
+            backgroundColor: [],
+            data: []
+          }
+        ]
+      },
       getColor: item => {
         return "color : " + item.color;
       },
@@ -107,6 +139,20 @@ export default {
         vm.groupSelected = group;
         vm.bimobjectSelected = bimobject;
         vm.showDialog = true;
+      },
+      filteredSubGrp: (subgroup, search) => {
+        // console.log(subgroup, search);
+        // vm.groupSelected = group;
+        // vm.bimobjectSelected = bimobject;
+        // vm.showDialog = true;
+        if (!search) return subgroup;
+        return subgroup.filter(obj => {
+          let s = search.toLocaleUpperCase();
+          return (
+            obj.dbId.toString().match(s) ||
+            obj.name.toLocaleUpperCase().match(s)
+          );
+        });
       },
       triItem: (bimobjectSelected, group) => {
         let grpModel = getSelectedGrpModel(vm.groupSelected, vm.model);
@@ -128,6 +174,26 @@ export default {
             }
           }
         }
+      },
+      clicShowChart: grp => {
+        vm.chardata.labels.splice(0,vm.chardata.labels.length)
+        vm.chardata.datasets[0].data.splice(0,vm.chardata.datasets[0].data.length)
+        vm.chardata.datasets[0].backgroundColor.splice(0,vm.chardata.datasets[0].backgroundColor.length)
+        vm.groupSelected = grp
+        let count = 0;
+        for (var y = 0; y < vm.groupSelected.referencial.allObject.length; y++) {
+          if (vm.groupSelected.referencial.allObject[y].group === 0)count++;
+        }
+        
+        vm.chardata.labels.push(vm.groupSelected.referencial.name)
+        vm.chardata.datasets[0].data.push(count);
+        vm.chardata.datasets[0].backgroundColor.push(vm.groupSelected.referencial.color);
+        for (var i = 0; i < vm.groupSelected.group.length; i++) {
+          vm.chardata.labels.push(vm.groupSelected.group[i].name)
+          vm.chardata.datasets[0].data.push(vm.groupSelected.group[i].allObject.length);
+          vm.chardata.datasets[0].backgroundColor.push(vm.groupSelected.group[i].color);
+        }
+        vm.showChart = true;
       }
     };
   },
@@ -140,12 +206,17 @@ export default {
         vm.groupLst = alertPluginLst.get();
       });
     });
-  }
+  },
+  components: { Chart }
 };
 </script>
 
 <style scoped>
 .spinal-inset2 {
   padding-left: 20px;
+}
+.search-bar {
+  width: 20%;
+  margin: 0;
 }
 </style>
