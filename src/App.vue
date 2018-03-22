@@ -4,7 +4,7 @@
     <h1 class="md-title">Group Studio</h1>
   </md-toolbar>
     <md-dialog v-if="groupSelected" :md-active.sync="showChart">
-        <md-dialog-title>Select group : {{bimobjectSelected.name}}
+        <md-dialog-title>Selected group : {{groupSelected.name}}
         </md-dialog-title>
         <md-dialog-content>
           <Chart :data="chardata" />
