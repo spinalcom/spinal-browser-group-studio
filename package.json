@@ -1,5 +1,6 @@
 {
   "name": "spinal-browser-group-studio",
+  "version": "v1.0.0",
   "description": "A spinalcore browser to do manual sorting of a Forgefile alertPlugin",
   "author": "laurent <htd.laurent@gmail.com>",
   "private": true,
