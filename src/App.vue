@@ -11,13 +11,13 @@
         <md-dialog-content>
           <md-list>
             <md-list-item @click="triItem(bimobjectSelected, groupSelected.referencial)">
-              <md-icon :style="getColor(groupSelected.referencial)">domain</md-icon>
+              <md-icon :style="getColor(groupSelected.referencial)">turned_in</md-icon>
               <span class="md-list-item-text"> {{groupSelected.referencial.name}}</span>
               <md-icon v-if="bimobjectSelected.group === groupSelected.referencial.id">check</md-icon>
             </md-list-item>
 
             <md-list-item v-for="group in groupSelected.group" v-bind:key="group.id" @click="triItem(bimobjectSelected, group)">
-              <md-icon :style="getColor(group)">domain</md-icon>
+              <md-icon :style="getColor(group)">turned_in</md-icon>
               <span class="md-list-item-text"> {{group.name}}</span>
               <md-icon v-if="bimobjectSelected.group === group.id">check</md-icon>
                 
@@ -39,9 +39,9 @@
             <md-icon :style="getColor(group.referencial)">label_outline</md-icon>
             <span class="md-list-item-text">{{group.referencial.name}}</span>
             <md-list slot="md-expand">
-              <md-list-item class="md-inset" v-for="bimobject in group.referencial.allObject" v-bind:key="bimobject.id"
+              <md-list-item class="md-inset spinal-inset2" v-for="bimobject in group.referencial.allObject" v-bind:key="bimobject.id"
               @click="clicItem(group, bimobject)">
-                <md-icon :style="getColorById(group, bimobject)">domain</md-icon>
+                <md-icon :style="getColorById(group, bimobject)">turned_in</md-icon>
                 <span class="md-list-item-text">{{bimobject.name}}</span>
               </md-list-item>
             </md-list>
@@ -52,9 +52,9 @@
             <md-icon :style="getColor(subgroup)">label_outline</md-icon>
             <span class="md-list-item-text">{{subgroup.name}}</span>
             <md-list slot="md-expand">
-              <md-list-item class="md-inset" v-for="bimobject in subgroup.allObject" v-bind:key="bimobject.id"
+              <md-list-item class="md-inset spinal-inset2" v-for="bimobject in subgroup.allObject" v-bind:key="bimobject.id"
               @click="clicItem(group, bimobject)">
-                <md-icon :style="getColor(subgroup)">domain</md-icon>
+                <md-icon :style="getColor(subgroup)">turned_in</md-icon>
                 <span class="md-list-item-text">{{bimobject.name}}</span>
               </md-list-item>
             </md-list>
@@ -145,5 +145,7 @@ export default {
 </script>
 
 <style scoped>
-
+.spinal-inset2 {
+  padding-left: 20px;
+}
 </style>
