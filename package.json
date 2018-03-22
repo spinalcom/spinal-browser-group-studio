@@ -7,7 +7,9 @@
   "scripts": {
     "watch": "node bin/watch.js",
     "dev": "npm run watch",
-    "build": "node bin/build.js"
+    "build": "node bin/build.js",
+    "postinstall": "npm run spinal-register",
+    "spinal-register": "spinal-register"
   },
   "dependencies": {
     "spinal-browser-drive": "git+https://github.com/spinalcom/spinal-browser-drive.git",
