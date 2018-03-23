@@ -26,7 +26,7 @@ class spinal {
     if (this.user.username) {
       SpinalUserManager.get_user_id('http://' + window.location.host, this.user.username, this.user.password, (response) => {
           let id = parseInt(response);
-          this.conn = spinalCore.connect(`http://${id}:${this.user.username}@${window.location.host}/`);
+          this.conn = spinalCore.connect(`http://${id}:${this.user.password}@${window.location.host}/`);
           defer.resolve();
         },
         () => {
