@@ -31,7 +31,7 @@
 
         <md-list>
           <md-list-item @click="go_toDrive">
-            <md-icon>power_settings_new</md-icon>
+            <md-icon>keyboard_return</md-icon>
             <span class="md-list-item-text">Return to SpinalBIM Drive</span>
           </md-list-item>
 
