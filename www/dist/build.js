@@ -76001,7 +76001,7 @@ exports.insert = function (css) {
 module.exports = XMLHttpRequest;
 
 },{}],75:[function(require,module,exports){
-var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert(".spinal-inset2[data-v-0f850260] {\n  padding-left: 20px;\n}\n.search-bar[data-v-0f850260] {\n  width: 20%;\n  margin: 0;\n}")
+var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert(".app-header[data-v-0f850260] {\n  background-color: #fff;\n}\n.app-header .md-button[data-v-0f850260],\n.app-header .md-icon[data-v-0f850260],\n.app-header div[data-v-0f850260] {\n  color: black;\n}\n.md-inset[data-v-0f850260] {\n  background-color: #2c2c2c;\n}\n.spinal-inset2[data-v-0f850260] {\n  padding-left: 20px;\n  background-color: #1c1c1c;\n}\n.search-bar[data-v-0f850260] {\n  width: 20%;\n  margin: 0;\n}\n.m_chart[data-v-0f850260] {\n  max-height: 33vh;\n}\n\n#app .md-app[data-v-0f850260] {\n  height: 100vh;\n}")
 ;(function(){
 "use strict";
 
@@ -76039,6 +76039,8 @@ exports.default = {
   data: function data() {
     var vm = this;
     return {
+      username: "",
+      menuVisible: false,
       groupSelected: null,
       bimobjectSelected: { name: "", color: "" },
       showDialog: false,
@@ -76047,10 +76049,17 @@ exports.default = {
       chardata: {
         labels: [],
         datasets: [{
-          borderWidth: 0,
+          borderWidth: 0.5,
           backgroundColor: [],
           data: []
         }]
+      },
+      go_toDrive: function go_toDrive() {
+        window.location = "/html/drive/";
+      },
+      sign_out: function sign_out() {
+        _SpinalObject2.default.signOut();
+        window.location = "/html/drive/#!/login');";
       },
       getColor: function getColor(item) {
         return "color : " + item.color;
@@ -76119,8 +76128,9 @@ exports.default = {
   },
   created: function created() {
     var vm = this;
-    var test = new _SpinalObject2.default();
-    test.getModel().then(function (alertPluginLst) {
+    var spinalIO = new _SpinalObject2.default();
+    vm.username = spinalIO.getUser().username;
+    spinalIO.getModel().then(function (alertPluginLst) {
       vm.model = alertPluginLst;
       alertPluginLst.bind(function () {
         vm.groupLst = alertPluginLst.get();
@@ -76134,7 +76144,7 @@ exports.default = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[_c('md-toolbar',[_c('h1',{staticClass:"md-title"},[_vm._v("Group Studio")])]),_vm._v(" "),(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-active":_vm.showChart},on:{"update:mdActive":function($event){_vm.showChart=$event}}},[_c('md-dialog-title',[_vm._v("Selected group : "+_vm._s(_vm.groupSelected.name)+"\n      ")]),_vm._v(" "),_c('md-dialog-content',[_c('Chart',{attrs:{"data":_vm.chardata}})],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showDialog = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-fullscreen":false,"md-active":_vm.showDialog},on:{"update:mdActive":function($event){_vm.showDialog=$event}}},[_c('md-dialog-title',[_vm._v("Select group : "+_vm._s(_vm.bimobjectSelected.name)+"\n      ")]),_vm._v(" "),_c('md-dialog-content',[_c('md-list',[_c('md-list-item',{on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, _vm.groupSelected.referencial)}}},[_c('md-icon',{style:(_vm.getColor(_vm.groupSelected.referencial))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(_vm.groupSelected.referencial.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === _vm.groupSelected.referencial.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1),_vm._v(" "),_vm._l((_vm.groupSelected.group),function(group){return _c('md-list-item',{key:group.id,on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, group)}}},[_c('md-icon',{style:(_vm.getColor(group))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(group.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === group.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1)})],2)],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showDialog = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),_c('md-list',_vm._l((_vm.groupLst),function(group){return _c('md-list-item',{key:group.id,attrs:{"md-expand":""}},[_c('md-icon',[_vm._v("label")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.name))]),_vm._v(" "),_c('md-button',{staticClass:"md-icon-button md-list-action",on:{"click":function($event){$event.stopPropagation();_vm.clicShowChart(group)}}},[_c('md-icon',[_vm._v("pie_chart")])],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},[_c('md-list-item',{staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(group.referencial))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.referencial.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(group.search),callback:function ($$v) {_vm.$set(group, "search", $$v)},expression:"group.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(group.referencial.allObject, group.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColorById(group, bimobject))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1),_vm._v(" "),_vm._l((group.group),function(subgroup){return _c('md-list-item',{key:subgroup.id,staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(subgroup.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(subgroup.search),callback:function ($$v) {_vm.$set(subgroup, "search", $$v)},expression:"subgroup.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(subgroup.allObject, subgroup.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.name))])],1)}))],1)})],2)],1)}))],1)}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[_c('md-app',{attrs:{"md-mode":"reveal"}},[_c('md-app-toolbar',{staticClass:"app-header"},[_c('div',{staticClass:"md-toolbar-row"},[_c('div',{staticClass:"md-toolbar-section-start"},[_c('img',{staticStyle:{"height":"42px","margin-top":"4px"},attrs:{"src":"dist/assets/img/SpinalBIMInspectorLogo.png","alt":"SpinalBIM Inspector"}})]),_vm._v(" "),_c('div',{staticClass:"md-toolbar-section-end"},[_vm._v("\n            "+_vm._s(_vm.username)+"\n          "),_c('md-button',{staticClass:"md-icon-button",on:{"click":function($event){_vm.menuVisible = !_vm.menuVisible}}},[_c('md-icon',[_vm._v("menu")])],1)],1)])]),_vm._v(" "),_c('md-app-drawer',{staticClass:"md-right",attrs:{"md-active":_vm.menuVisible},on:{"update:mdActive":function($event){_vm.menuVisible=$event}}},[_c('md-toolbar',{staticClass:"app-header",attrs:{"md-elevation":"0"}},[_c('div',{staticClass:"md-toolbar-row"},[_c('div',{staticClass:"md-toolbar-section-start"},[_c('img',{staticStyle:{"height":"42px","margin-top":"4px"},attrs:{"src":"dist/assets/img/SpinalBIMInspectorLogo.png","alt":"SpinalBIM Inspector"}})]),_vm._v(" "),_c('div',{staticClass:"md-toolbar-section-end"},[_c('md-button',{staticClass:"md-icon-button",on:{"click":function($event){_vm.menuVisible = !_vm.menuVisible}}},[_c('md-icon',[_vm._v("menu")])],1)],1)])]),_vm._v(" "),_c('md-list',[_c('md-list-item',{on:{"click":_vm.go_toDrive}},[_c('md-icon',[_vm._v("power_settings_new")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v("Return to SpinalBIM Drive")])],1),_vm._v(" "),_c('md-list-item',{on:{"click":_vm.sign_out}},[_c('md-icon',[_vm._v("power_settings_new")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v("Sign out")])],1)],1)],1),_vm._v(" "),_c('md-app-content',[(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-active":_vm.showChart,"md-fullscreen":false},on:{"update:mdActive":function($event){_vm.showChart=$event}}},[_c('md-dialog-title',[_vm._v("Selected group : "+_vm._s(_vm.groupSelected.name)+"\n          ")]),_vm._v(" "),_c('md-dialog-content',[_c('Chart',{staticClass:"m_chart",attrs:{"data":_vm.chardata,"options":{responsive: true, maintainAspectRatio: false, legend: {labels : {fontColor : '#fff'}}}}})],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showChart = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-fullscreen":false,"md-active":_vm.showDialog},on:{"update:mdActive":function($event){_vm.showDialog=$event}}},[_c('md-dialog-title',[_vm._v("Select group : "+_vm._s(_vm.bimobjectSelected.name)+"\n          ")]),_vm._v(" "),_c('md-dialog-content',[_c('md-list',[_c('md-list-item',{on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, _vm.groupSelected.referencial)}}},[_c('md-icon',{style:(_vm.getColor(_vm.groupSelected.referencial))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(_vm.groupSelected.referencial.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === _vm.groupSelected.referencial.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1),_vm._v(" "),_vm._l((_vm.groupSelected.group),function(group){return _c('md-list-item',{key:group.id,on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, group)}}},[_c('md-icon',{style:(_vm.getColor(group))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(group.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === group.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1)})],2)],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showDialog = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),_c('md-list',_vm._l((_vm.groupLst),function(group){return _c('md-list-item',{key:group.id,attrs:{"md-expand":""}},[_c('md-icon',[_vm._v("label")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.name))]),_vm._v(" "),_c('md-button',{staticClass:"md-icon-button md-list-action",on:{"click":function($event){$event.stopPropagation();_vm.clicShowChart(group)}}},[_c('md-icon',[_vm._v("pie_chart")])],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},[_c('md-list-item',{staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(group.referencial))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.referencial.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(group.search),callback:function ($$v) {_vm.$set(group, "search", $$v)},expression:"group.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(group.referencial.allObject, group.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColorById(group, bimobject))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1),_vm._v(" "),_vm._l((group.group),function(subgroup){return _c('md-list-item',{key:subgroup.id,staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(subgroup.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(subgroup.search),callback:function ($$v) {_vm.$set(subgroup, "search", $$v)},expression:"subgroup.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(subgroup.allObject, subgroup.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1)})],2)],1)}))],1)],1)],1)}
 __vue__options__.staticRenderFns = []
 __vue__options__._scopeId = "data-v-0f850260"
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
@@ -76181,28 +76191,72 @@ var spinal = function () {
   function spinal() {
     _classCallCheck(this, spinal);
 
-    this.conn = spinalCore.connect('http://168:JHGgcz45JKilmzknzelf65ddDadggftIO98P@' + window.location.host + '/');
+    this.user = {
+      username: "",
+      password: ""
+    };
   }
 
   _createClass(spinal, [{
-    key: "getModel",
-    value: function getModel() {
+    key: "init",
+    value: function init() {
       var _this = this;
 
       var defer = Q.defer();
-      var path = getParameterByName("path");
-      if (!path) {
-        window.location.pathname = "/html/drive/";
+
+      var user = this.getUser();
+      if (this.user.username) {
+        SpinalUserManager.get_user_id('http://' + window.location.host, this.user.username, this.user.password, function (response) {
+          var id = parseInt(response);
+          _this.conn = spinalCore.connect("http://" + id + ":" + _this.user.username + "@" + window.location.host + "/");
+          defer.resolve();
+        }, function () {
+          window.location = "/html/drive/";
+          // defer.reject();
+        });
+      } else window.location = "/html/drive/";
+      return defer.promise;
+    }
+  }, {
+    key: "getUser",
+    value: function getUser() {
+      if (!this.user.username) {
+        var _user = window.localStorage.getItem("spinalhome_cfg");
+        if (_user) {
+          this.user = JSON.parse(atob(_user));
+        }
       }
-      path = atob(path);
-      spinalCore.load(this.conn, path, function (forgefile) {
-        if (forgefile.groupAlertPlugin) {
-          forgefile.groupAlertPlugin.load(function (model) {
-            _this.model = model;
-            defer.resolve(_this.model);
-          });
-        } else defer.reject();
-      }, function () {});
+      return this.user;
+    }
+  }, {
+    key: "getModel",
+    value: function getModel() {
+      var _this2 = this;
+
+      var defer = Q.defer();
+
+      this.init().then(function () {
+        var path = getParameterByName("path");
+        if (!path) {
+          window.location = "/html/drive/";
+        }
+        path = atob(path);
+        spinalCore.load(_this2.conn, path, function (forgefile) {
+          if (forgefile.groupAlertPlugin) {
+            forgefile.groupAlertPlugin.load(function (model) {
+              _this2.model = model;
+              defer.resolve(_this2.model);
+            });
+          } else window.location = "/html/drive/";
+          // defer.reject();
+        }, function () {
+          window.location = "/html/drive/";
+          // defer.reject();
+        });
+      }, function () {
+        window.location = "/html/drive/";
+        // defer.reject();
+      });
 
       return defer.promise;
     }
@@ -76210,6 +76264,10 @@ var spinal = function () {
 
   return spinal;
 }();
+
+spinal.signOut = function () {
+  window.localStorage.setItem("spinalhome_cfg", "");
+};
 
 exports.default = spinal;
 

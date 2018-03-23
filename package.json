@@ -1,6 +1,6 @@
 {
-  "name": "spinal-browser-group-studio",
-  "version": "v1.0.2",
+  "name": "spinal-browser-inspector",
+  "version": "v1.0.3",
   "description": "A spinalcore browser to do manual sorting of a Forgefile alertPlugin",
   "author": "laurent <htd.laurent@gmail.com>",
   "private": true,
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "spinal-browser-drive": "git+https://github.com/spinalcom/spinal-browser-drive.git",
-    "spinal-lib-drive-group-studio": "git+https://github.com/spinalcom/spinal-lib-drive-group-studio.git"
+    "spinal-lib-drive-inspector": "git+https://github.com/spinalcom/spinal-lib-drive-inspector.git"
   },
   "devDependencies": {
     "babel-core": "^6.0.0",
