@@ -21895,6 +21895,8 @@ root = typeof _root_obj === "undefined" ? global : window;
 root.spinalCore = (function() {
   function spinalCore() {}
 
+  spinalCore._def = {};
+
   spinalCore.connect = function(options) {
     var auth;
     if (typeof options === 'string') {
@@ -21951,12 +21953,12 @@ root.spinalCore = (function() {
     });
   };
 
-  spinalCore.models = function(modelList) {
-    var m, results;
-    root = typeof _root_obj === "undefined" ? global : window;
+  spinalCore.register_models = function(modelList) {
+    var len, m, q, results;
     results = [];
-    for (m in modelList) {
-      results.push(root[m.name] = m);
+    for (q = 0, len = modelList.length; q < len; q++) {
+      m = modelList[q];
+      results.push(spinalCore._def[m.name] = m);
     }
     return results;
   };
@@ -21983,15 +21985,13 @@ root.spinalCore = (function() {
           return x.name.get() === file_name;
         });
         if (file != null) {
-          return file.load((function(_this) {
-            return function(data, err) {
-              if (err) {
-                return callback_error();
-              } else {
-                return callback_success(data, err);
-              }
-            };
-          })(this));
+          return file.load(function(data, err) {
+            if (err) {
+              return callback_error();
+            } else {
+              return callback_success(data, err);
+            }
+          });
         } else {
           return callback_error();
         }
@@ -22002,35 +22002,31 @@ root.spinalCore = (function() {
   spinalCore.load_type = function(fs, type, callback_success, callback_error) {
     if (typeof callback_error === "undefined") {
       callback_error = function() {
-        return console.log("Model of this type could not be loaded. You can pass a callback to handle this error.");
+        return console.log("Model of this type could not be loaded. " + "You can pass a callback to handle this error.");
       };
     }
-    return fs.load_type(type, (function(_this) {
-      return function(data, err) {
-        if (err) {
-          return callback_error();
-        } else {
-          return callback_success(data, err);
-        }
-      };
-    })(this));
+    return fs.load_type(type, function(data, err) {
+      if (err) {
+        return callback_error();
+      } else {
+        return callback_success(data, err);
+      }
+    });
   };
 
   spinalCore.load_right = function(fs, ptr, callback_success, callback_error) {
     if (typeof callback_error === "undefined") {
       callback_error = function() {
-        return console.log("Model Right could not be loaded. You can pass a callback to handle this error.");
+        return console.log("Model Right could not be loaded." + " You can pass a callback to handle this error.");
       };
     }
-    return fs.load_right(ptr, (function(_this) {
-      return function(data, err) {
-        if (err) {
-          return callback_error();
-        } else {
-          return callback_success(data, err);
-        }
-      };
-    })(this));
+    return fs.load_right(ptr, function(data, err) {
+      if (err) {
+        return callback_error();
+      } else {
+        return callback_success(data, err);
+      }
+    });
   };
 
   spinalCore.share_model = function(fs, ptr, file_name, right_flag, targetName) {
@@ -22532,7 +22528,7 @@ root.Model = (function() {
         return this[n] = p;
       } else {
         if (this[n] != null) {
-          console.error("attribute " + n + " already exists in " + (ModelProcessManager.get_object_class(this)));
+          console.error(("attribute " + n + " already exists in ") + ("" + (ModelProcessManager.get_object_class(this))));
         }
         p = ModelProcessManager.conv(p);
         if (indexOf.call(p._parents, this) < 0) {
@@ -23589,7 +23585,7 @@ root.Lst = (function(superClass) {
     change = this.length !== value.length;
     s = this.static_length();
     if (s >= 0 && change) {
-      console.error("resizing a static array (type " + (ModelProcessManager.get_object_class(this)) + ") is forbidden");
+      console.error("resizing a static array (type " + ((ModelProcessManager.get_object_class(this)) + ") is forbidden"));
     }
     for (p = q = 0, ref = value.length; 0 <= ref ? q < ref : q > ref; p = 0 <= ref ? ++q : --q) {
       if (p < this.length) {
@@ -23691,7 +23687,7 @@ root.Lst = (function(superClass) {
 
   Lst.prototype._static_size_check = function(force) {
     if (this.static_length() >= 0 && !force) {
-      console.error("resizing a static array (type " + (ModelProcessManager.get_object_class(this)) + ") is forbidden");
+      console.error("resizing a static array (type " + ((ModelProcessManager.get_object_class(this)) + ") is forbidden"));
       return true;
     }
     return false;
@@ -24292,14 +24288,14 @@ root.FileSystem = (function() {
 
   FileSystem.prototype.load_right = function(ptr, callback) {
     FileSystem._send_chan();
-    this.send("gR " + ptr + " " + FileSystem._nb_callbacks + " ");
+    this.send("r " + ptr + " " + FileSystem._nb_callbacks + " ");
     FileSystem._callbacks[FileSystem._nb_callbacks] = callback;
     return FileSystem._nb_callbacks++;
   };
 
   FileSystem.prototype.share_model = function(ptr, file_name, share_type, targetName) {
     FileSystem._send_chan();
-    return this.send("sh " + ptr._server_id + " " + share_type + " " + (encodeURI(targetName)) + " " + (encodeURI(file_name)) + " ");
+    return this.send("h " + ptr._server_id + " " + share_type + " " + (encodeURI(targetName)) + " " + (encodeURI(file_name)) + " ");
   };
 
   FileSystem.prototype.send = function(data) {
@@ -24313,7 +24309,11 @@ root.FileSystem = (function() {
     var path, xhr_object;
     path = "";
     if (FileSystem.CONNECTOR_TYPE === "Node" || FileSystem.is_cordova) {
-      path = "http://" + FileSystem._url + ":" + FileSystem._port + FileSystem.url_com + ("?s=" + this._session_num);
+      if (FileSystem._port) {
+        path = "http://" + FileSystem._url + ":" + FileSystem._port + FileSystem.url_com + ("?s=" + this._session_num);
+      } else {
+        path = "http://" + FileSystem._url + FileSystem.url_com + ("?s=" + this._session_num);
+      }
     } else if (FileSystem.CONNECTOR_TYPE === "Browser") {
       path = FileSystem.url_com + ("?s=" + this._session_num);
     }
@@ -24340,7 +24340,7 @@ root.FileSystem = (function() {
             results = [];
             for (q = 0, len = ref.length; q < len; q++) {
               c = ref[q];
-              if (_obj instanceof global[c[0]]) {
+              if (_obj instanceof root[c[0]]) {
                 results.push(c[1](_obj));
               } else {
                 results.push(void 0);
@@ -24482,7 +24482,11 @@ root.FileSystem = (function() {
       fs = FileSystem.get_inst();
       path = "";
       if (FileSystem.CONNECTOR_TYPE === "Node" || FileSystem.is_cordova) {
-        path = "http://" + FileSystem._url + ":" + FileSystem._port + FileSystem.url_com + ("?s=" + fs._session_num + "&p=" + tmp._server_id);
+        if (FileSystem._port) {
+          path = "http://" + FileSystem._url + ":" + FileSystem._port + FileSystem.url_com + ("?s=" + fs._session_num + "&p=" + tmp._server_id);
+        } else {
+          path = "http://" + FileSystem._url + FileSystem.url_com + ("?s=" + fs._session_num + "&p=" + tmp._server_id);
+        }
       } else if (FileSystem.CONNECTOR_TYPE === "Browser") {
         path = FileSystem.url_com + ("?s=" + fs._session_num + "&p=" + tmp._server_id);
       }
@@ -24503,13 +24507,17 @@ root.FileSystem = (function() {
         }
       };
       xhr_object.send(tmp.file);
-      return delete tmp.file;
+      delete tmp.file;
     }
+    return FileSystem.signal_change(FileSystem._objects[res]);
   };
 
   FileSystem._create_model_by_name = function(name) {
     if (typeof name !== "string") {
       return name;
+    }
+    if (typeof spinalCore._def[name] !== 'undefined') {
+      return new spinalCore._def[name]();
     }
     if (typeof root[name] === 'undefined') {
       root[name] = new Function("return function " + name + " (){" + name + ".super(this);}")();
@@ -24605,7 +24613,11 @@ root.FileSystem = (function() {
       }
       path = "";
       if (FileSystem.CONNECTOR_TYPE === "Node" || FileSystem.is_cordova) {
-        path = "http://" + FileSystem._url + ":" + FileSystem._port + FileSystem.url_com;
+        if (FileSystem._port) {
+          path = "http://" + FileSystem._url + ":" + FileSystem._port + FileSystem.url_com;
+        } else {
+          path = "http://" + FileSystem._url + FileSystem.url_com;
+        }
       } else if (FileSystem.CONNECTOR_TYPE === "Browser") {
         path = FileSystem.url_com;
       }
@@ -24628,7 +24640,7 @@ root.FileSystem = (function() {
               results = [];
               for (q = 0, len = ref2.length; q < len; q++) {
                 c = ref2[q];
-                if (_obj instanceof global[c[0]]) {
+                if (_obj instanceof root[c[0]]) {
                   results.push(c[1](_obj));
                 } else {
                   results.push(void 0);
@@ -25068,21 +25080,19 @@ root.Process = (function() {
 
 })();
 
-root.bind = (function(_this) {
-  return function(m, f) {
-    var i, len, q, results;
-    if (m instanceof Model) {
-      return m.bind(f);
-    } else {
-      results = [];
-      for (q = 0, len = m.length; q < len; q++) {
-        i = m[q];
-        results.push(i.bind(f));
-      }
-      return results;
+root.bind = function(m, f) {
+  var i, len, q, results;
+  if (m instanceof Model) {
+    return m.bind(f);
+  } else {
+    results = [];
+    for (q = 0, len = m.length; q < len; q++) {
+      i = m[q];
+      results.push(i.bind(f));
     }
-  };
-})(this);
+    return results;
+  }
+};
 
 root = typeof _root_obj === "undefined" ? global : window;
 
@@ -25180,15 +25190,7 @@ get_top = function(l) {
 new_alert_msg = (function() {
   function new_alert_msg(params1) {
     this.params = params1 != null ? params1 : {};
-    this.setMsg = bind(this.setMsg, this);
-    this.show = bind(this.show, this);
-    this.hide = bind(this.hide, this);
-    this.show_btn = bind(this.show_btn, this);
-    this.hide_btn = bind(this.hide_btn, this);
     this.create_footer = bind(this.create_footer, this);
-    this._loop_spinner_ = bind(this._loop_spinner_, this);
-    this.create_content = bind(this.create_content, this);
-    this.create_header = bind(this.create_header, this);
     this.rotatating = true;
     this.deg = 40;
     this.in_rotation = false;
@@ -25204,27 +25206,25 @@ new_alert_msg = (function() {
         zIndex: 100000,
         textAlign: 'center'
       },
-      onclick: (function(_this) {
-        return function(evt) {
-          if (evt.target !== _this.background) {
-            return;
-          }
-          if (_this.params.onclose != null) {
-            _this.params.onClose();
-          }
-          _this.hide();
-          if (typeof evt.stopPropagation === "function") {
-            evt.stopPropagation();
-          }
-          if (typeof evt.preventDefault === "function") {
-            evt.preventDefault();
-          }
-          if (typeof evt.stopImmediatePropagation === "function") {
-            evt.stopImmediatePropagation();
-          }
-          return false;
-        };
-      })(this)
+      onclick: function(evt) {
+        if (evt.target !== this.background) {
+          return;
+        }
+        if (this.params.onclose != null) {
+          this.params.onClose();
+        }
+        this.hide();
+        if (typeof evt.stopPropagation === "function") {
+          evt.stopPropagation();
+        }
+        if (typeof evt.preventDefault === "function") {
+          evt.preventDefault();
+        }
+        if (typeof evt.stopImmediatePropagation === "function") {
+          evt.stopImmediatePropagation();
+        }
+        return false;
+      }
     });
     if (this.params.parent != null) {
       this.params.parent.appendChild(this.background);
@@ -25333,12 +25333,10 @@ new_alert_msg = (function() {
     this.img.style.webkitTransform = "rotate(" + this.deg + "deg)";
     this.img.style.transitionTimingFunction = 'linear';
     if (this.rotatating === true) {
-      return setTimeout((function(_this) {
-        return function() {
-          _this.in_rotation = false;
-          return _this._loop_spinner_();
-        };
-      })(this), 2000);
+      return setTimeout(function() {
+        this.in_rotation = false;
+        return this._loop_spinner_();
+      }, 2000);
     } else {
       return this.in_rotation = false;
     }
@@ -25589,7 +25587,6 @@ spinal_new_popup = function(title, params) {
         color: 'white'
       },
       onmousedown: function(evt) {
-        console.log("TEST ?");
         old_x = evt.clientX;
         old_y = evt.clientY;
         top_x = parseInt(w.style.left);
