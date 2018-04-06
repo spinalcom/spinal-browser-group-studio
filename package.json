@@ -1,6 +1,6 @@
 {
   "name": "spinal-browser-inspector",
-  "version": "v1.0.7",
+  "version": "v1.0.8",
   "description": "A spinalcore browser to do manual sorting of a Forgefile alertPlugin",
   "author": "laurent <htd.laurent@gmail.com>",
   "private": true,
@@ -32,7 +32,7 @@
     "npm-run-all": "^2.3.0",
     "q": "^1.5.1",
     "sassify": "^4.0.1",
-    "spinal-core-connectorjs": "git+https://github.com/spinalcom/spinal-core-connectorjs.git#2.3.1",
+    "spinal-core-connectorjs": "git+https://github.com/spinalcom/spinal-core-connectorjs.git",
     "uglify-js": "^2.5.0",
     "vue": "^2.0.1",
     "vue-chartjs": "^3.2.1",
