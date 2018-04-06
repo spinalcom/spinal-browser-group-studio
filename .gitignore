@@ -10,4 +10,11 @@ yarn-error.log
 *.ntvs*
 *.njsproj
 *.sln
+
 .browser_organs
+.apps.json
+.config.json
+.config_env/
+launch.config.js
+nerve-center/
+src/test.js

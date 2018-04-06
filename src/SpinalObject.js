@@ -83,6 +83,35 @@ spinal.signOut = () => {
   window.localStorage.setItem("spinalhome_cfg", "");
 }
 
-
+// function load(path, callbackSuccess, callbackError) {
+//   if (this.models[path]) {
+//     if (!(this.models[path] instanceof Array)) {
+// callbackSuccess(this.models[path]);
+//     } else {
+//       this.models[path].push({
+//         success: callbackSuccess,
+//         error: callbackError
+//       });
+//     }
+//   } else {
+//     this.models[path] = [{
+//       success: callbackSuccess,
+//       error: callbackError
+//     }];
+//     spinalcore.load(conn, path, (model) => {
+//       let callback = this.models[path];
+//       this.models[path] = model;
+//       for (let i = 0; i < callback.length; i++) {
+//         callback[i].success(model);
+//       }
+//     }, () => {
+//       let callback = this.models[path];
+//       this.models[path] = undefined;
+//       for (let i = 0; i < callback.length; i++) {
+//         callback[i].error(model);
+//       }
+//     });
+//   }
+// }
 
 export default spinal;

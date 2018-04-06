@@ -21895,8 +21895,6 @@ root = typeof _root_obj === "undefined" ? global : window;
 root.spinalCore = (function() {
   function spinalCore() {}
 
-  spinalCore._def = {};
-
   spinalCore.connect = function(options) {
     var auth;
     if (typeof options === 'string') {
@@ -21953,12 +21951,12 @@ root.spinalCore = (function() {
     });
   };
 
-  spinalCore.register_models = function(modelList) {
-    var len, m, q, results;
+  spinalCore.models = function(modelList) {
+    var m, results;
+    root = typeof _root_obj === "undefined" ? global : window;
     results = [];
-    for (q = 0, len = modelList.length; q < len; q++) {
-      m = modelList[q];
-      results.push(spinalCore._def[m.name] = m);
+    for (m in modelList) {
+      results.push(root[m.name] = m);
     }
     return results;
   };
@@ -21985,13 +21983,15 @@ root.spinalCore = (function() {
           return x.name.get() === file_name;
         });
         if (file != null) {
-          return file.load(function(data, err) {
-            if (err) {
-              return callback_error();
-            } else {
-              return callback_success(data, err);
-            }
-          });
+          return file.load((function(_this) {
+            return function(data, err) {
+              if (err) {
+                return callback_error();
+              } else {
+                return callback_success(data, err);
+              }
+            };
+          })(this));
         } else {
           return callback_error();
         }
@@ -22002,31 +22002,35 @@ root.spinalCore = (function() {
   spinalCore.load_type = function(fs, type, callback_success, callback_error) {
     if (typeof callback_error === "undefined") {
       callback_error = function() {
-        return console.log("Model of this type could not be loaded. " + "You can pass a callback to handle this error.");
+        return console.log("Model of this type could not be loaded. You can pass a callback to handle this error.");
       };
     }
-    return fs.load_type(type, function(data, err) {
-      if (err) {
-        return callback_error();
-      } else {
-        return callback_success(data, err);
-      }
-    });
+    return fs.load_type(type, (function(_this) {
+      return function(data, err) {
+        if (err) {
+          return callback_error();
+        } else {
+          return callback_success(data, err);
+        }
+      };
+    })(this));
   };
 
   spinalCore.load_right = function(fs, ptr, callback_success, callback_error) {
     if (typeof callback_error === "undefined") {
       callback_error = function() {
-        return console.log("Model Right could not be loaded." + " You can pass a callback to handle this error.");
+        return console.log("Model Right could not be loaded. You can pass a callback to handle this error.");
       };
     }
-    return fs.load_right(ptr, function(data, err) {
-      if (err) {
-        return callback_error();
-      } else {
-        return callback_success(data, err);
-      }
-    });
+    return fs.load_right(ptr, (function(_this) {
+      return function(data, err) {
+        if (err) {
+          return callback_error();
+        } else {
+          return callback_success(data, err);
+        }
+      };
+    })(this));
   };
 
   spinalCore.share_model = function(fs, ptr, file_name, right_flag, targetName) {
@@ -22370,7 +22374,11 @@ root.SpinalUserManager = (function() {
     FileSystem._url = options.hostname;
     FileSystem._port = options.port;
     if (FileSystem.CONNECTOR_TYPE === "Node" || FileSystem.is_cordova) {
-      path = "http://" + FileSystem._url + ":" + FileSystem._port + get_cmd;
+      if (FileSystem._port) {
+        path = "http://" + FileSystem._url + ":" + FileSystem._port + get_cmd;
+      } else {
+        path = "http://" + FileSystem._url + get_cmd;
+      }
     } else if (FileSystem.CONNECTOR_TYPE === "Browser") {
       path = get_cmd;
     }
@@ -22524,7 +22532,7 @@ root.Model = (function() {
         return this[n] = p;
       } else {
         if (this[n] != null) {
-          console.error(("attribute " + n + " already exists in ") + ("" + (ModelProcessManager.get_object_class(this))));
+          console.error("attribute " + n + " already exists in " + (ModelProcessManager.get_object_class(this)));
         }
         p = ModelProcessManager.conv(p);
         if (indexOf.call(p._parents, this) < 0) {
@@ -23581,7 +23589,7 @@ root.Lst = (function(superClass) {
     change = this.length !== value.length;
     s = this.static_length();
     if (s >= 0 && change) {
-      console.error("resizing a static array (type " + ((ModelProcessManager.get_object_class(this)) + ") is forbidden"));
+      console.error("resizing a static array (type " + (ModelProcessManager.get_object_class(this)) + ") is forbidden");
     }
     for (p = q = 0, ref = value.length; 0 <= ref ? q < ref : q > ref; p = 0 <= ref ? ++q : --q) {
       if (p < this.length) {
@@ -23683,7 +23691,7 @@ root.Lst = (function(superClass) {
 
   Lst.prototype._static_size_check = function(force) {
     if (this.static_length() >= 0 && !force) {
-      console.error("resizing a static array (type " + ((ModelProcessManager.get_object_class(this)) + ") is forbidden"));
+      console.error("resizing a static array (type " + (ModelProcessManager.get_object_class(this)) + ") is forbidden");
       return true;
     }
     return false;
@@ -24284,14 +24292,14 @@ root.FileSystem = (function() {
 
   FileSystem.prototype.load_right = function(ptr, callback) {
     FileSystem._send_chan();
-    this.send("r " + ptr + " " + FileSystem._nb_callbacks + " ");
+    this.send("gR " + ptr + " " + FileSystem._nb_callbacks + " ");
     FileSystem._callbacks[FileSystem._nb_callbacks] = callback;
     return FileSystem._nb_callbacks++;
   };
 
   FileSystem.prototype.share_model = function(ptr, file_name, share_type, targetName) {
     FileSystem._send_chan();
-    return this.send("h " + ptr._server_id + " " + share_type + " " + (encodeURI(targetName)) + " " + (encodeURI(file_name)) + " ");
+    return this.send("sh " + ptr._server_id + " " + share_type + " " + (encodeURI(targetName)) + " " + (encodeURI(file_name)) + " ");
   };
 
   FileSystem.prototype.send = function(data) {
@@ -24332,7 +24340,7 @@ root.FileSystem = (function() {
             results = [];
             for (q = 0, len = ref.length; q < len; q++) {
               c = ref[q];
-              if (_obj instanceof root[c[0]]) {
+              if (_obj instanceof global[c[0]]) {
                 results.push(c[1](_obj));
               } else {
                 results.push(void 0);
@@ -24495,17 +24503,13 @@ root.FileSystem = (function() {
         }
       };
       xhr_object.send(tmp.file);
-      delete tmp.file;
+      return delete tmp.file;
     }
-    return FileSystem.signal_change(FileSystem._objects[res]);
   };
 
   FileSystem._create_model_by_name = function(name) {
     if (typeof name !== "string") {
       return name;
-    }
-    if (typeof spinalCore._def[name] !== 'undefined') {
-      return new spinalCore._def[name]();
     }
     if (typeof root[name] === 'undefined') {
       root[name] = new Function("return function " + name + " (){" + name + ".super(this);}")();
@@ -24624,7 +24628,7 @@ root.FileSystem = (function() {
               results = [];
               for (q = 0, len = ref2.length; q < len; q++) {
                 c = ref2[q];
-                if (_obj instanceof root[c[0]]) {
+                if (_obj instanceof global[c[0]]) {
                   results.push(c[1](_obj));
                 } else {
                   results.push(void 0);
@@ -25064,19 +25068,21 @@ root.Process = (function() {
 
 })();
 
-root.bind = function(m, f) {
-  var i, len, q, results;
-  if (m instanceof Model) {
-    return m.bind(f);
-  } else {
-    results = [];
-    for (q = 0, len = m.length; q < len; q++) {
-      i = m[q];
-      results.push(i.bind(f));
+root.bind = (function(_this) {
+  return function(m, f) {
+    var i, len, q, results;
+    if (m instanceof Model) {
+      return m.bind(f);
+    } else {
+      results = [];
+      for (q = 0, len = m.length; q < len; q++) {
+        i = m[q];
+        results.push(i.bind(f));
+      }
+      return results;
     }
-    return results;
-  }
-};
+  };
+})(this);
 
 root = typeof _root_obj === "undefined" ? global : window;
 
@@ -25174,7 +25180,15 @@ get_top = function(l) {
 new_alert_msg = (function() {
   function new_alert_msg(params1) {
     this.params = params1 != null ? params1 : {};
+    this.setMsg = bind(this.setMsg, this);
+    this.show = bind(this.show, this);
+    this.hide = bind(this.hide, this);
+    this.show_btn = bind(this.show_btn, this);
+    this.hide_btn = bind(this.hide_btn, this);
     this.create_footer = bind(this.create_footer, this);
+    this._loop_spinner_ = bind(this._loop_spinner_, this);
+    this.create_content = bind(this.create_content, this);
+    this.create_header = bind(this.create_header, this);
     this.rotatating = true;
     this.deg = 40;
     this.in_rotation = false;
@@ -25190,25 +25204,27 @@ new_alert_msg = (function() {
         zIndex: 100000,
         textAlign: 'center'
       },
-      onclick: function(evt) {
-        if (evt.target !== this.background) {
-          return;
-        }
-        if (this.params.onclose != null) {
-          this.params.onClose();
-        }
-        this.hide();
-        if (typeof evt.stopPropagation === "function") {
-          evt.stopPropagation();
-        }
-        if (typeof evt.preventDefault === "function") {
-          evt.preventDefault();
-        }
-        if (typeof evt.stopImmediatePropagation === "function") {
-          evt.stopImmediatePropagation();
-        }
-        return false;
-      }
+      onclick: (function(_this) {
+        return function(evt) {
+          if (evt.target !== _this.background) {
+            return;
+          }
+          if (_this.params.onclose != null) {
+            _this.params.onClose();
+          }
+          _this.hide();
+          if (typeof evt.stopPropagation === "function") {
+            evt.stopPropagation();
+          }
+          if (typeof evt.preventDefault === "function") {
+            evt.preventDefault();
+          }
+          if (typeof evt.stopImmediatePropagation === "function") {
+            evt.stopImmediatePropagation();
+          }
+          return false;
+        };
+      })(this)
     });
     if (this.params.parent != null) {
       this.params.parent.appendChild(this.background);
@@ -25317,10 +25333,12 @@ new_alert_msg = (function() {
     this.img.style.webkitTransform = "rotate(" + this.deg + "deg)";
     this.img.style.transitionTimingFunction = 'linear';
     if (this.rotatating === true) {
-      return setTimeout(function() {
-        this.in_rotation = false;
-        return this._loop_spinner_();
-      }, 2000);
+      return setTimeout((function(_this) {
+        return function() {
+          _this.in_rotation = false;
+          return _this._loop_spinner_();
+        };
+      })(this), 2000);
     } else {
       return this.in_rotation = false;
     }
@@ -25571,6 +25589,7 @@ spinal_new_popup = function(title, params) {
         color: 'white'
       },
       onmousedown: function(evt) {
+        console.log("TEST ?");
         old_x = evt.clientX;
         old_y = evt.clientY;
         top_x = parseInt(w.style.left);
@@ -26477,6 +26496,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       /* harmony reexport (binding) */__webpack_require__.d(__webpack_exports__, "mixins", function () {
         return __WEBPACK_IMPORTED_MODULE_0__mixins_index_js__["a"];
       });
+      /* harmony reexport (binding) */__webpack_require__.d(__webpack_exports__, "generateChart", function () {
+        return __WEBPACK_IMPORTED_MODULE_1__BaseCharts__["j"];
+      });
 
       var VueCharts = {
         Bar: __WEBPACK_IMPORTED_MODULE_1__BaseCharts__["a" /* Bar */],
@@ -26488,7 +26510,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         Radar: __WEBPACK_IMPORTED_MODULE_1__BaseCharts__["h" /* Radar */],
         Bubble: __WEBPACK_IMPORTED_MODULE_1__BaseCharts__["b" /* Bubble */],
         Scatter: __WEBPACK_IMPORTED_MODULE_1__BaseCharts__["i" /* Scatter */],
-        mixins: __WEBPACK_IMPORTED_MODULE_0__mixins_index_js__["a" /* default */]
+        mixins: __WEBPACK_IMPORTED_MODULE_0__mixins_index_js__["a" /* default */],
+        generateChart: __WEBPACK_IMPORTED_MODULE_1__BaseCharts__["j" /* generateChart */]
       };
       /* harmony default export */__webpack_exports__["default"] = VueCharts;
 
@@ -26588,8 +26611,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     /***/function (module, __webpack_exports__, __webpack_require__) {
 
       "use strict";
-      /* harmony export (binding) */
-      __webpack_require__.d(__webpack_exports__, "a", function () {
+      /* harmony export (immutable) */
+      __webpack_exports__["j"] = generateChart;
+      /* harmony export (binding) */__webpack_require__.d(__webpack_exports__, "a", function () {
         return Bar;
       });
       /* harmony export (binding) */__webpack_require__.d(__webpack_exports__, "d", function () {
@@ -26687,7 +26711,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
           }
         };
       }
-
       var Bar = generateChart('bar-chart', 'bar');
       var HorizontalBar = generateChart('horizontalbar-chart', 'horizontalBar');
       var Doughnut = generateChart('doughnut-chart', 'doughnut');
@@ -26967,8 +26990,8 @@ exports.reload = tryWrap(function (id, options) {
 
 },{}],70:[function(require,module,exports){
 /*!
- * vue-material v1.0.0-beta-7
- * Made with <3 by marcosmoura 2017
+ * vue-material v1.0.0-beta-8
+ * Made with <3 by marcosmoura 2018
  * Released under the MIT License.
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -26980,7 +27003,7 @@ exports.reload = tryWrap(function (id, options) {
 		exports["VueMaterial"] = factory(require("vue"));
 	else
 		root["VueMaterial"] = factory(root["Vue"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_7__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_7__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -27191,7 +27214,8 @@ var init = function init() {
       shorterDays: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
       months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
       shortMonths: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'],
-      shorterMonths: ['J', 'F', 'M', 'A', 'M', 'Ju', 'Ju', 'A', 'Se', 'O', 'N', 'D']
+      shorterMonths: ['J', 'F', 'M', 'A', 'M', 'Ju', 'Ju', 'A', 'Se', 'O', 'N', 'D'],
+      firstDayOfAWeek: 0
     }
   });
 
@@ -27642,7 +27666,7 @@ exports.default = function (name, options) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdIcon/MdIcon.vue
-var MdIcon = __webpack_require__(150);
+var MdIcon = __webpack_require__(151);
 var MdIcon_default = /*#__PURE__*/__webpack_require__.n(MdIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-59c14b8f","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdIcon/MdIcon.vue
@@ -27682,7 +27706,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(149)
+  __webpack_require__(150)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -27690,7 +27714,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -27768,8 +27792,7 @@ var render = function() {
   return _c(
     "div",
     {
-      staticClass: "md-ripple",
-      class: _vm.rippleClasses,
+      class: ["md-ripple", _vm.rippleClasses],
       on: {
         "&touchstart": function($event) {
           $event.stopPropagation()
@@ -27779,9 +27802,17 @@ var render = function() {
           $event.stopPropagation()
           _vm.touchMoveCheck($event)
         },
+        "&touchend": function($event) {
+          $event.stopPropagation()
+          _vm.clearWave($event)
+        },
         "&mousedown": function($event) {
           $event.stopPropagation()
           _vm.startRipple($event)
+        },
+        "&mouseup": function($event) {
+          $event.stopPropagation()
+          _vm.clearWave($event)
         }
       }
     },
@@ -27790,21 +27821,15 @@ var render = function() {
       _vm._v(" "),
       !_vm.isDisabled
         ? _c(
-            "transition",
-            {
-              attrs: { name: "md-ripple" },
-              on: { "after-enter": _vm.clearWave }
-            },
-            [
-              _vm.animating
-                ? _c("span", {
-                    ref: "rippleWave",
-                    staticClass: "md-ripple-wave",
-                    class: _vm.waveClasses,
-                    style: _vm.waveStyles
-                  })
-                : _vm._e()
-            ]
+            "transition-group",
+            { attrs: { name: "md-ripple" } },
+            _vm._l(_vm.ripples, function(ripple, index) {
+              return _c("span", {
+                key: "ripple" + index,
+                class: ["md-ripple-wave", _vm.waveClasses],
+                style: ripple.waveStyles
+              })
+            })
           )
         : _vm._e()
     ],
@@ -27833,7 +27858,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -27960,7 +27985,7 @@ module.exports.polyfill = function(object) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialog.vue
-var MdDialog = __webpack_require__(205);
+var MdDialog = __webpack_require__(206);
 var MdDialog_default = /*#__PURE__*/__webpack_require__.n(MdDialog);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-f080a6a2","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialog.vue
@@ -28044,7 +28069,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(204)
+  __webpack_require__(205)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -28052,7 +28077,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -28104,7 +28129,7 @@ var _MdRipple = __webpack_require__(19);
 
 var _MdRipple2 = _interopRequireDefault(_MdRipple);
 
-var _MdListItemContent = __webpack_require__(282);
+var _MdListItemContent = __webpack_require__(283);
 
 var _MdListItemContent2 = _interopRequireDefault(_MdListItemContent);
 
@@ -28148,12 +28173,12 @@ exports.default = function (context, props) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdButton_vue__ = __webpack_require__(98);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdButton_vue__ = __webpack_require__(99);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdButton_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdButton_vue__);
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(97)
+  __webpack_require__(98)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -28161,7 +28186,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -28206,7 +28231,7 @@ if (false) {(function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdInput/MdInput.vue
-var MdInput = __webpack_require__(158);
+var MdInput = __webpack_require__(159);
 var MdInput_default = /*#__PURE__*/__webpack_require__.n(MdInput);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-69de42aa","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdInput/MdInput.vue
@@ -28266,7 +28291,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -28320,6 +28345,7 @@ exports.default = {
   props: {
     value: {},
     placeholder: String,
+    name: String,
     maxlength: [String, Number],
     readonly: Boolean,
     required: Boolean,
@@ -28580,7 +28606,7 @@ exports.default = {
                 el = this.$el;
 
 
-                if (manualCall && this.$el.constructor.name.toLowerCase() === 'comment') {
+                if (manualCall && this.$el.nodeType === Node.COMMENT_NODE) {
                   el = this.$vnode.elm;
                 }
 
@@ -28737,7 +28763,7 @@ exports.default = {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdField.vue
-var MdField = __webpack_require__(147);
+var MdField = __webpack_require__(148);
 var MdField_default = /*#__PURE__*/__webpack_require__.n(MdField);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-2ecd7b97","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdField.vue
@@ -28775,7 +28801,7 @@ var render = function() {
                 {
                   staticClass:
                     "md-icon-button md-dense md-input-action md-clear",
-                  attrs: { tabindex: "-1" },
+                  attrs: { tabindex: "-1", disabled: _vm.MdField.disabled },
                   on: { click: _vm.clearInput }
                 },
                 [_c("md-clear-icon")],
@@ -28828,7 +28854,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(146)
+  __webpack_require__(147)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -28836,7 +28862,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -28908,7 +28934,7 @@ module.exports = startOfDay
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var startOfWeek = __webpack_require__(174)
+var startOfWeek = __webpack_require__(175)
 
 /**
  * @category ISO Week Helpers
@@ -28943,7 +28969,7 @@ module.exports = startOfISOWeek
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdOverlay/MdOverlay.vue
-var MdOverlay = __webpack_require__(181);
+var MdOverlay = __webpack_require__(182);
 var MdOverlay_default = /*#__PURE__*/__webpack_require__.n(MdOverlay);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-0e05c97a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdOverlay/MdOverlay.vue
@@ -28984,7 +29010,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(180)
+  __webpack_require__(181)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -28992,7 +29018,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -29069,12 +29095,12 @@ module.exports = getDaysInMonth
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdPopover_vue__ = __webpack_require__(198);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdPopover_vue__ = __webpack_require__(199);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdPopover_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdPopover_vue__);
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(197)
+  __webpack_require__(198)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -29082,7 +29108,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -29152,7 +29178,7 @@ exports.default = function (el, config, cb) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableHead.vue
-var MdTableHead = __webpack_require__(360);
+var MdTableHead = __webpack_require__(361);
 var MdTableHead_default = /*#__PURE__*/__webpack_require__.n(MdTableHead);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-98ddc082","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableHead.vue
@@ -29223,7 +29249,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(359)
+  __webpack_require__(360)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -29231,7 +29257,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -30110,7 +30136,7 @@ exports.default = {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdClearIcon.vue
-var MdClearIcon = __webpack_require__(148);
+var MdClearIcon = __webpack_require__(149);
 var MdClearIcon_default = /*#__PURE__*/__webpack_require__.n(MdClearIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-f53126ba","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdClearIcon.vue
@@ -30118,7 +30144,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(1)
+  return _vm._m(1, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -30151,7 +30177,9 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("md-icon", { staticClass: "md-icon-image" }, [_vm._m(0)])
+    return _c("md-icon", { staticClass: "md-icon-image" }, [
+      _vm._m(0, false, true)
+    ])
   }
 ]
 render._withStripped = true
@@ -30171,7 +30199,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -30214,7 +30242,7 @@ if (false) {(function () {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdContent_vue__ = __webpack_require__(163);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdContent_vue__ = __webpack_require__(164);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdContent_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdContent_vue__);
 var disposed = false
 var normalizeComponent = __webpack_require__(0)
@@ -30223,7 +30251,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -30482,7 +30510,7 @@ exports.default = {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdEmptyState/MdEmptyState.vue
-var MdEmptyState = __webpack_require__(239);
+var MdEmptyState = __webpack_require__(240);
 var MdEmptyState_default = /*#__PURE__*/__webpack_require__.n(MdEmptyState);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-d8a893a2","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdEmptyState/MdEmptyState.vue
@@ -30550,7 +30578,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(238)
+  __webpack_require__(239)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -30558,7 +30586,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -30650,7 +30678,7 @@ exports.default = function (Vue) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdMenu/MdMenu.vue
-var MdMenu = __webpack_require__(248);
+var MdMenu = __webpack_require__(249);
 var MdMenu_default = /*#__PURE__*/__webpack_require__.n(MdMenu);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-577c0662","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdMenu/MdMenu.vue
@@ -30679,7 +30707,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(247)
+  __webpack_require__(248)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -30687,7 +30715,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -30732,7 +30760,7 @@ if (false) {(function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdMenu/MdMenuContent.vue
-var MdMenuContent = __webpack_require__(250);
+var MdMenuContent = __webpack_require__(251);
 var MdMenuContent_default = /*#__PURE__*/__webpack_require__.n(MdMenuContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-2c16774c","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdMenu/MdMenuContent.vue
@@ -30752,11 +30780,15 @@ var render = function() {
       _vm.shouldRender
         ? _c(
             "transition",
-            { attrs: { name: "md-menu-content", css: _vm.didMount } },
+            _vm._g(
+              { attrs: { name: "md-menu-content", css: _vm.didMount } },
+              _vm.$listeners
+            ),
             [
               _c(
                 "div",
                 {
+                  ref: "menu",
                   class: [
                     _vm.menuClasses,
                     _vm.mdContentClass,
@@ -30822,6 +30854,7 @@ var render = function() {
                   _c(
                     "div",
                     {
+                      ref: "container",
                       staticClass: "md-menu-content-container md-scrollbar",
                       class: _vm.$mdActiveTheme
                     },
@@ -30844,7 +30877,7 @@ var render = function() {
                             }
                           },
                           "md-list",
-                          _vm.$attrs,
+                          _vm.filteredAttrs,
                           false
                         ),
                         [_vm._t("default")],
@@ -30876,7 +30909,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(249)
+  __webpack_require__(250)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -30884,7 +30917,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -30952,7 +30985,7 @@ exports.default = function (el, eventName, observerFn, options) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdList.vue
-var MdList = __webpack_require__(253);
+var MdList = __webpack_require__(254);
 var MdList_default = /*#__PURE__*/__webpack_require__.n(MdList);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-16ed17ef","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdList.vue
@@ -30989,7 +31022,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(252)
+  __webpack_require__(253)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -30997,7 +31030,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -31040,12 +31073,12 @@ if (false) {(function () {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdListItem_vue__ = __webpack_require__(279);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdListItem_vue__ = __webpack_require__(280);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdListItem_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdListItem_vue__);
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(278)
+  __webpack_require__(279)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -31053,7 +31086,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -31110,7 +31143,7 @@ exports.default = ['click', 'dblclick', 'mousedown', 'mouseup'];
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSteppers/MdStepHeader.vue
-var MdStepHeader = __webpack_require__(332);
+var MdStepHeader = __webpack_require__(333);
 var MdStepHeader_default = /*#__PURE__*/__webpack_require__.n(MdStepHeader);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-43e95866","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSteppers/MdStepHeader.vue
@@ -31191,7 +31224,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -31236,7 +31269,7 @@ if (false) {(function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableRow.vue
-var MdTableRow = __webpack_require__(369);
+var MdTableRow = __webpack_require__(370);
 var MdTableRow_default = /*#__PURE__*/__webpack_require__.n(MdTableRow);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-00a4496a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableRow.vue
@@ -31246,11 +31279,14 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "tr",
-    {
-      staticClass: "md-table-row",
-      class: _vm.rowClasses,
-      on: { click: _vm.onClick }
-    },
+    _vm._g(
+      {
+        staticClass: "md-table-row",
+        class: _vm.rowClasses,
+        on: { click: _vm.onClick }
+      },
+      _vm.$listeners
+    ),
     [
       _vm.selectableCount
         ? _c("md-table-cell-selection", {
@@ -31288,7 +31324,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(368)
+  __webpack_require__(369)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -31296,7 +31332,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -31341,7 +31377,7 @@ if (false) {(function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableCellSelection.vue
-var MdTableCellSelection = __webpack_require__(371);
+var MdTableCellSelection = __webpack_require__(372);
 var MdTableCellSelection_default = /*#__PURE__*/__webpack_require__.n(MdTableCellSelection);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-50a4b70a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableCellSelection.vue
@@ -31386,7 +31422,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(370)
+  __webpack_require__(371)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -31394,7 +31430,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -31439,7 +31475,7 @@ if (false) {(function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdToolbar/MdToolbar.vue
-var MdToolbar = __webpack_require__(378);
+var MdToolbar = __webpack_require__(379);
 var MdToolbar_default = /*#__PURE__*/__webpack_require__.n(MdToolbar);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-38a0b4d9","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdToolbar/MdToolbar.vue
@@ -31471,7 +31507,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(377)
+  __webpack_require__(378)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -31479,7 +31515,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -32330,67 +32366,67 @@ var _MdBottomBar = __webpack_require__(88);
 
 var _MdBottomBar2 = _interopRequireDefault(_MdBottomBar);
 
-var _MdButton = __webpack_require__(96);
+var _MdButton = __webpack_require__(97);
 
 var _MdButton2 = _interopRequireDefault(_MdButton);
 
-var _MdCard = __webpack_require__(102);
+var _MdCard = __webpack_require__(103);
 
 var _MdCard2 = _interopRequireDefault(_MdCard);
 
-var _MdCheckbox = __webpack_require__(138);
+var _MdCheckbox = __webpack_require__(139);
 
 var _MdCheckbox2 = _interopRequireDefault(_MdCheckbox);
 
-var _MdChips = __webpack_require__(142);
+var _MdChips = __webpack_require__(143);
 
 var _MdChips2 = _interopRequireDefault(_MdChips);
 
-var _MdContent = __webpack_require__(162);
+var _MdContent = __webpack_require__(163);
 
 var _MdContent2 = _interopRequireDefault(_MdContent);
 
-var _MdDatepicker = __webpack_require__(164);
+var _MdDatepicker = __webpack_require__(165);
 
 var _MdDatepicker2 = _interopRequireDefault(_MdDatepicker);
 
-var _MdDialog = __webpack_require__(208);
+var _MdDialog = __webpack_require__(209);
 
 var _MdDialog2 = _interopRequireDefault(_MdDialog);
 
-var _MdDialogAlert = __webpack_require__(218);
+var _MdDialogAlert = __webpack_require__(219);
 
 var _MdDialogAlert2 = _interopRequireDefault(_MdDialogAlert);
 
-var _MdDialogConfirm = __webpack_require__(221);
+var _MdDialogConfirm = __webpack_require__(222);
 
 var _MdDialogConfirm2 = _interopRequireDefault(_MdDialogConfirm);
 
-var _MdDialogPrompt = __webpack_require__(224);
+var _MdDialogPrompt = __webpack_require__(225);
 
 var _MdDialogPrompt2 = _interopRequireDefault(_MdDialogPrompt);
 
-var _MdDivider = __webpack_require__(227);
+var _MdDivider = __webpack_require__(228);
 
 var _MdDivider2 = _interopRequireDefault(_MdDivider);
 
-var _MdDrawer = __webpack_require__(231);
+var _MdDrawer = __webpack_require__(232);
 
 var _MdDrawer2 = _interopRequireDefault(_MdDrawer);
 
-var _MdElevation = __webpack_require__(235);
+var _MdElevation = __webpack_require__(236);
 
 var _MdElevation2 = _interopRequireDefault(_MdElevation);
 
-var _MdEmptyState = __webpack_require__(237);
+var _MdEmptyState = __webpack_require__(238);
 
 var _MdEmptyState2 = _interopRequireDefault(_MdEmptyState);
 
-var _MdField = __webpack_require__(240);
+var _MdField = __webpack_require__(241);
 
 var _MdField2 = _interopRequireDefault(_MdField);
 
-var _MdHighlightText = __webpack_require__(267);
+var _MdHighlightText = __webpack_require__(268);
 
 var _MdHighlightText2 = _interopRequireDefault(_MdHighlightText);
 
@@ -32398,67 +32434,67 @@ var _MdIcon = __webpack_require__(43);
 
 var _MdIcon2 = _interopRequireDefault(_MdIcon);
 
-var _MdImage = __webpack_require__(271);
+var _MdImage = __webpack_require__(272);
 
 var _MdImage2 = _interopRequireDefault(_MdImage);
 
-var _MdLayout = __webpack_require__(275);
+var _MdLayout = __webpack_require__(276);
 
 var _MdLayout2 = _interopRequireDefault(_MdLayout);
 
-var _MdList = __webpack_require__(277);
+var _MdList = __webpack_require__(278);
 
 var _MdList2 = _interopRequireDefault(_MdList);
 
-var _MdMenu = __webpack_require__(295);
+var _MdMenu = __webpack_require__(296);
 
 var _MdMenu2 = _interopRequireDefault(_MdMenu);
 
-var _MdProgress = __webpack_require__(298);
+var _MdProgress = __webpack_require__(299);
 
 var _MdProgress2 = _interopRequireDefault(_MdProgress);
 
-var _MdRadio = __webpack_require__(306);
+var _MdRadio = __webpack_require__(307);
 
 var _MdRadio2 = _interopRequireDefault(_MdRadio);
 
-var _MdRipple = __webpack_require__(310);
+var _MdRipple = __webpack_require__(311);
 
 var _MdRipple2 = _interopRequireDefault(_MdRipple);
 
-var _MdSnackbar = __webpack_require__(311);
+var _MdSnackbar = __webpack_require__(312);
 
 var _MdSnackbar2 = _interopRequireDefault(_MdSnackbar);
 
-var _MdSpeedDial = __webpack_require__(318);
+var _MdSpeedDial = __webpack_require__(319);
 
 var _MdSpeedDial2 = _interopRequireDefault(_MdSpeedDial);
 
-var _MdSteppers = __webpack_require__(328);
+var _MdSteppers = __webpack_require__(329);
 
 var _MdSteppers2 = _interopRequireDefault(_MdSteppers);
 
-var _MdSubheader = __webpack_require__(342);
+var _MdSubheader = __webpack_require__(343);
 
 var _MdSubheader2 = _interopRequireDefault(_MdSubheader);
 
-var _MdSwitch = __webpack_require__(346);
+var _MdSwitch = __webpack_require__(347);
 
 var _MdSwitch2 = _interopRequireDefault(_MdSwitch);
 
-var _MdTable = __webpack_require__(350);
+var _MdTable = __webpack_require__(351);
 
 var _MdTable2 = _interopRequireDefault(_MdTable);
 
-var _MdTabs = __webpack_require__(388);
+var _MdTabs = __webpack_require__(389);
 
 var _MdTabs2 = _interopRequireDefault(_MdTabs);
 
-var _MdToolbar = __webpack_require__(394);
+var _MdToolbar = __webpack_require__(395);
 
 var _MdToolbar2 = _interopRequireDefault(_MdToolbar);
 
-var _MdTooltip = __webpack_require__(395);
+var _MdTooltip = __webpack_require__(396);
 
 var _MdTooltip2 = _interopRequireDefault(_MdTooltip);
 
@@ -32562,7 +32598,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -32616,6 +32652,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _MdAppSideDrawer = __webpack_require__(62);
 
 var _MdAppSideDrawer2 = _interopRequireDefault(_MdAppSideDrawer);
@@ -32633,10 +32671,11 @@ function buildSlots(children, context, functionalContext, options) {
 
   if (children) {
     children.forEach(function (child) {
-      var opts = child.componentOptions;
+      var data = child.data;
+      var componentOptions = child.componentOptions;
 
-      if (opts && componentTypes.includes(opts.tag)) {
-        child.data.slot = opts.tag;
+      if (data && componentTypes.includes(data.slot) || componentOptions && componentTypes.includes(componentOptions.tag)) {
+        child.data.slot = data.slot || componentOptions.tag;
         child.data.provide = options.Ctor.options.provide;
         child.context = context;
         child.functionalContext = functionalContext;
@@ -32668,7 +32707,8 @@ exports.default = {
   functional: true,
   render: function render(createElement, _ref) {
     var children = _ref.children,
-        props = _ref.props;
+        props = _ref.props,
+        data = _ref.data;
 
     var appComponent = _MdAppSideDrawer2.default;
 
@@ -32686,8 +32726,18 @@ exports.default = {
       }
     });
 
+    var staticClass = {};
+    if (data.staticClass) {
+      data.staticClass.split(/\s+/).forEach(function (name) {
+        if (name.length === 0) return;
+        staticClass[name] = true;
+      });
+    }
+
     return createElement(appComponent, {
-      attrs: props
+      attrs: props,
+      class: _extends({}, staticClass, data.class),
+      style: _extends({}, data.staticStyle, data.style)
     }, slots);
   }
 };
@@ -32776,7 +32826,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -33165,7 +33215,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -33305,7 +33355,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -33469,7 +33519,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -33587,7 +33637,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -33931,7 +33981,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -34211,7 +34261,9 @@ exports.default = {
         this.showOptions();
       }
     },
-    onInput: function onInput() {
+    onInput: function onInput(value) {
+      this.$emit('input', value);
+
       if (!this.mdOpenOnFocus) {
         this.showOptions();
       }
@@ -34226,15 +34278,24 @@ exports.default = {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
+                if (!this.showMenu) {
+                  _context2.next = 2;
+                  break;
+                }
+
+                return _context2.abrupt('return', false);
+
+              case 2:
+
                 this.showMenu = true;
-                _context2.next = 3;
+                _context2.next = 5;
                 return this.$nextTick();
 
-              case 3:
+              case 5:
                 this.triggerPopover = true;
                 this.$emit('md-opened');
 
-              case 5:
+              case 7:
               case 'end':
                 return _context2.stop();
             }
@@ -34404,7 +34465,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -34492,7 +34553,7 @@ var _MdBottomBar = __webpack_require__(89);
 
 var _MdBottomBar2 = _interopRequireDefault(_MdBottomBar);
 
-var _MdBottomBarItem = __webpack_require__(94);
+var _MdBottomBarItem = __webpack_require__(95);
 
 var _MdBottomBarItem2 = _interopRequireDefault(_MdBottomBarItem);
 
@@ -34564,7 +34625,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -34820,9 +34881,14 @@ var _MdComponent = __webpack_require__(2);
 
 var _MdComponent2 = _interopRequireDefault(_MdComponent);
 
+var _MdDebounce = __webpack_require__(94);
+
+var _MdDebounce2 = _interopRequireDefault(_MdDebounce);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; } //
+//
 //
 //
 //
@@ -34847,10 +34913,9 @@ exports.default = new _MdComponent2.default({
   },
   data: function data() {
     return {
-      eventType: null,
-      waveStyles: null,
-      animating: false,
-      touchTimeout: null
+      ripples: [],
+      touchTimeout: null,
+      eventType: null
     };
   },
   computed: {
@@ -34882,6 +34947,7 @@ exports.default = new _MdComponent2.default({
         this.startRipple(active);
         this.$emit('update:mdActive', false);
       }
+      this.clearWave();
     }
   },
   methods: {
@@ -34906,31 +34972,26 @@ exports.default = new _MdComponent2.default({
               case 0:
                 eventType = _this2.eventType, isDisabled = _this2.isDisabled, mdCentered = _this2.mdCentered;
 
-                if (!(!isDisabled && (!eventType || eventType === $event.type))) {
-                  _context.next = 10;
-                  break;
+
+                if (!isDisabled && (!eventType || eventType === $event.type)) {
+                  size = _this2.getSize();
+                  position = null;
+
+
+                  if (mdCentered) {
+                    position = _this2.getCenteredPosition(size);
+                  } else {
+                    position = _this2.getHitPosition($event, size);
+                  }
+
+                  _this2.eventType = $event.type;
+                  _this2.ripples.push({
+                    animating: true,
+                    waveStyles: _this2.applyStyles(position, size)
+                  });
                 }
 
-                size = _this2.getSize();
-                position = null;
-
-
-                if (mdCentered) {
-                  position = _this2.getCenteredPosition(size);
-                } else {
-                  position = _this2.getHitPosition($event, size);
-                }
-
-                _context.next = 7;
-                return _this2.clearWave();
-
-              case 7:
-
-                _this2.eventType = $event.type;
-                _this2.animating = true;
-                _this2.applyStyles(position, size);
-
-              case 10:
+              case 2:
               case 'end':
                 return _context.stop();
             }
@@ -34941,17 +35002,15 @@ exports.default = new _MdComponent2.default({
     applyStyles: function applyStyles(position, size) {
       size += 'px';
 
-      this.waveStyles = _extends({}, position, {
+      return _extends({}, position, {
         width: size,
         height: size
       });
     },
-    clearWave: function clearWave() {
-      this.waveStyles = null;
-      this.animating = false;
 
-      return this.$nextTick();
-    },
+    clearWave: (0, _MdDebounce2.default)(function () {
+      this.ripples = [];
+    }, 2000),
     getSize: function getSize() {
       var _$el = this.$el,
           offsetWidth = _$el.offsetWidth,
@@ -34988,13 +35047,38 @@ exports.default = new _MdComponent2.default({
 
 /***/ }),
 /* 94 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports.default = function (fn, time) {
+  var timeout = void 0;
+  return function () {
+    var _this = this,
+        _arguments = arguments;
+
+    var functionCall = function functionCall() {
+      return fn.apply(_this, _arguments);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(functionCall, time);
+  };
+};
+
+/***/ }),
+/* 95 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdBottomBar/MdBottomBarItem.vue
-var MdBottomBarItem = __webpack_require__(95);
+var MdBottomBarItem = __webpack_require__(96);
 var MdBottomBarItem_default = /*#__PURE__*/__webpack_require__.n(MdBottomBarItem);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7ba29fa6","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdBottomBar/MdBottomBarItem.vue
@@ -35061,7 +35145,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -35099,7 +35183,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35243,7 +35327,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35269,13 +35353,13 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35303,7 +35387,7 @@ var _MdRouterLinkProps = __webpack_require__(12);
 
 var _MdRouterLinkProps2 = _interopRequireDefault(_MdRouterLinkProps);
 
-var _MdButtonContent = __webpack_require__(99);
+var _MdButtonContent = __webpack_require__(100);
 
 var _MdButtonContent2 = _interopRequireDefault(_MdButtonContent);
 
@@ -35364,14 +35448,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdButton/MdButtonContent.vue
-var MdButtonContent = __webpack_require__(101);
+var MdButtonContent = __webpack_require__(102);
 var MdButtonContent_default = /*#__PURE__*/__webpack_require__.n(MdButtonContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-008ae93a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdButton/MdButtonContent.vue
@@ -35399,7 +35483,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(100)
+  __webpack_require__(101)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -35407,7 +35491,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -35445,13 +35529,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35486,7 +35570,7 @@ exports.default = {
 //
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35500,51 +35584,51 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdCard = __webpack_require__(103);
+var _MdCard = __webpack_require__(104);
 
 var _MdCard2 = _interopRequireDefault(_MdCard);
 
-var _MdCardArea = __webpack_require__(106);
+var _MdCardArea = __webpack_require__(107);
 
 var _MdCardArea2 = _interopRequireDefault(_MdCardArea);
 
-var _MdCardHeader = __webpack_require__(109);
+var _MdCardHeader = __webpack_require__(110);
 
 var _MdCardHeader2 = _interopRequireDefault(_MdCardHeader);
 
-var _MdCardHeaderText = __webpack_require__(112);
+var _MdCardHeaderText = __webpack_require__(113);
 
 var _MdCardHeaderText2 = _interopRequireDefault(_MdCardHeaderText);
 
-var _MdCardMedia = __webpack_require__(114);
+var _MdCardMedia = __webpack_require__(115);
 
 var _MdCardMedia2 = _interopRequireDefault(_MdCardMedia);
 
-var _MdCardMediaActions = __webpack_require__(117);
+var _MdCardMediaActions = __webpack_require__(118);
 
 var _MdCardMediaActions2 = _interopRequireDefault(_MdCardMediaActions);
 
-var _MdCardMediaCover = __webpack_require__(120);
+var _MdCardMediaCover = __webpack_require__(121);
 
 var _MdCardMediaCover2 = _interopRequireDefault(_MdCardMediaCover);
 
-var _MdCardContent = __webpack_require__(123);
+var _MdCardContent = __webpack_require__(124);
 
 var _MdCardContent2 = _interopRequireDefault(_MdCardContent);
 
-var _MdCardExpand = __webpack_require__(126);
+var _MdCardExpand = __webpack_require__(127);
 
 var _MdCardExpand2 = _interopRequireDefault(_MdCardExpand);
 
-var _MdCardExpandTrigger = __webpack_require__(129);
+var _MdCardExpandTrigger = __webpack_require__(130);
 
 var _MdCardExpandTrigger2 = _interopRequireDefault(_MdCardExpandTrigger);
 
-var _MdCardExpandContent = __webpack_require__(132);
+var _MdCardExpandContent = __webpack_require__(133);
 
 var _MdCardExpandContent2 = _interopRequireDefault(_MdCardExpandContent);
 
-var _MdCardActions = __webpack_require__(135);
+var _MdCardActions = __webpack_require__(136);
 
 var _MdCardActions2 = _interopRequireDefault(_MdCardActions);
 
@@ -35567,14 +35651,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCard.vue
-var MdCard = __webpack_require__(105);
+var MdCard = __webpack_require__(106);
 var MdCard_default = /*#__PURE__*/__webpack_require__.n(MdCard);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-24f7f3af","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCard.vue
@@ -35603,7 +35687,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(104)
+  __webpack_require__(105)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -35611,7 +35695,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -35649,13 +35733,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35705,14 +35789,14 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardArea/MdCardArea.vue
-var MdCardArea = __webpack_require__(108);
+var MdCardArea = __webpack_require__(109);
 var MdCardArea_default = /*#__PURE__*/__webpack_require__.n(MdCardArea);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-132f02d7","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardArea/MdCardArea.vue
@@ -35741,7 +35825,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(107)
+  __webpack_require__(108)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -35749,7 +35833,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -35787,13 +35871,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35824,14 +35908,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardHeader/MdCardHeader.vue
-var MdCardHeader = __webpack_require__(111);
+var MdCardHeader = __webpack_require__(112);
 var MdCardHeader_default = /*#__PURE__*/__webpack_require__.n(MdCardHeader);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4d103817","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardHeader/MdCardHeader.vue
@@ -35855,7 +35939,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(110)
+  __webpack_require__(111)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -35863,7 +35947,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -35901,13 +35985,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35928,14 +36012,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardHeader/MdCardHeaderText.vue
-var MdCardHeaderText = __webpack_require__(113);
+var MdCardHeaderText = __webpack_require__(114);
 var MdCardHeaderText_default = /*#__PURE__*/__webpack_require__.n(MdCardHeaderText);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-49a3ab64","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardHeader/MdCardHeaderText.vue
@@ -35968,7 +36052,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -36006,7 +36090,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36042,14 +36126,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardMedia/MdCardMedia.vue
-var MdCardMedia = __webpack_require__(116);
+var MdCardMedia = __webpack_require__(117);
 var MdCardMedia_default = /*#__PURE__*/__webpack_require__.n(MdCardMedia);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-33e1f253","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardMedia/MdCardMedia.vue
@@ -36078,7 +36162,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(115)
+  __webpack_require__(116)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36086,7 +36170,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36124,13 +36208,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36208,14 +36292,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardMedia/MdCardMediaActions.vue
-var MdCardMediaActions = __webpack_require__(119);
+var MdCardMediaActions = __webpack_require__(120);
 var MdCardMediaActions_default = /*#__PURE__*/__webpack_require__.n(MdCardMediaActions);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-102584da","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardMedia/MdCardMediaActions.vue
@@ -36244,7 +36328,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(118)
+  __webpack_require__(119)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36252,7 +36336,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36290,13 +36374,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 118 */
+/* 119 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 119 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36317,14 +36401,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 120 */
+/* 121 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardMedia/MdCardMediaCover.vue
-var MdCardMediaCover = __webpack_require__(122);
+var MdCardMediaCover = __webpack_require__(123);
 var MdCardMediaCover_default = /*#__PURE__*/__webpack_require__.n(MdCardMediaCover);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-20dfcfd4","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardMedia/MdCardMediaCover.vue
@@ -36363,7 +36447,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(121)
+  __webpack_require__(122)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36371,7 +36455,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36409,13 +36493,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36538,14 +36622,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 123 */
+/* 124 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardContent/MdCardContent.vue
-var MdCardContent = __webpack_require__(125);
+var MdCardContent = __webpack_require__(126);
 var MdCardContent_default = /*#__PURE__*/__webpack_require__.n(MdCardContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-36a98486","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardContent/MdCardContent.vue
@@ -36569,7 +36653,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(124)
+  __webpack_require__(125)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36577,7 +36661,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36615,13 +36699,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 124 */
+/* 125 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 125 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36642,14 +36726,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 126 */
+/* 127 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardExpand/MdCardExpand.vue
-var MdCardExpand = __webpack_require__(128);
+var MdCardExpand = __webpack_require__(129);
 var MdCardExpand_default = /*#__PURE__*/__webpack_require__.n(MdCardExpand);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-d46d3592","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardExpand/MdCardExpand.vue
@@ -36673,7 +36757,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(127)
+  __webpack_require__(128)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36681,7 +36765,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36719,13 +36803,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 127 */
+/* 128 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 128 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36747,17 +36831,17 @@ exports.default = {
 };
 
 /***/ }),
-/* 129 */
+/* 130 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdCardExpandTrigger_vue__ = __webpack_require__(131);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdCardExpandTrigger_vue__ = __webpack_require__(132);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdCardExpandTrigger_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdCardExpandTrigger_vue__);
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(130)
+  __webpack_require__(131)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36765,7 +36849,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36803,13 +36887,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36854,14 +36938,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 132 */
+/* 133 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardExpand/MdCardExpandContent.vue
-var MdCardExpandContent = __webpack_require__(134);
+var MdCardExpandContent = __webpack_require__(135);
 var MdCardExpandContent_default = /*#__PURE__*/__webpack_require__.n(MdCardExpandContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-604296f2","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardExpand/MdCardExpandContent.vue
@@ -36890,7 +36974,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(133)
+  __webpack_require__(134)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -36898,7 +36982,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -36936,13 +37020,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 133 */
+/* 134 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 134 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36992,14 +37076,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 135 */
+/* 136 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCard/MdCardActions/MdCardActions.vue
-var MdCardActions = __webpack_require__(137);
+var MdCardActions = __webpack_require__(138);
 var MdCardActions_default = /*#__PURE__*/__webpack_require__.n(MdCardActions);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-2894ebc5","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCard/MdCardActions/MdCardActions.vue
@@ -37031,7 +37115,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(136)
+  __webpack_require__(137)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -37039,7 +37123,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -37077,13 +37161,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 136 */
+/* 137 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 137 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37119,7 +37203,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 138 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37133,7 +37217,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdCheckbox = __webpack_require__(139);
+var _MdCheckbox = __webpack_require__(140);
 
 var _MdCheckbox2 = _interopRequireDefault(_MdCheckbox);
 
@@ -37145,14 +37229,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 139 */
+/* 140 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdCheckbox/MdCheckbox.vue
-var MdCheckbox = __webpack_require__(141);
+var MdCheckbox = __webpack_require__(142);
 var MdCheckbox_default = /*#__PURE__*/__webpack_require__.n(MdCheckbox);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7c2899cf","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdCheckbox/MdCheckbox.vue
@@ -37249,7 +37333,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(140)
+  __webpack_require__(141)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -37257,7 +37341,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -37295,13 +37379,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 140 */
+/* 141 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 141 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37352,7 +37436,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37366,11 +37450,11 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdChips = __webpack_require__(143);
+var _MdChips = __webpack_require__(144);
 
 var _MdChips2 = _interopRequireDefault(_MdChips);
 
-var _MdChip = __webpack_require__(159);
+var _MdChip = __webpack_require__(160);
 
 var _MdChip2 = _interopRequireDefault(_MdChip);
 
@@ -37383,14 +37467,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdChips/MdChips.vue
-var MdChips = __webpack_require__(145);
+var MdChips = __webpack_require__(146);
 var MdChips_default = /*#__PURE__*/__webpack_require__.n(MdChips);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-0b3d2a1e","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdChips/MdChips.vue
@@ -37402,16 +37486,17 @@ var render = function() {
     "md-field",
     { staticClass: "md-chips", class: [_vm.$mdActiveTheme, _vm.chipsClasses] },
     [
-      !_vm.mdStatic ? _vm._t("default") : _vm._e(),
+      _vm._t("default"),
       _vm._v(" "),
       _vm._l(_vm.value, function(chip, key) {
         return _c(
           "md-chip",
           {
-            key: key,
+            key: chip,
             attrs: {
               "md-deletable": !_vm.mdStatic,
-              "md-clickable": !_vm.mdStatic
+              "md-clickable": !_vm.mdStatic,
+              "md-duplicated": _vm.duplicatedChip === chip
             },
             on: {
               keydown: function($event) {
@@ -37452,6 +37537,7 @@ var render = function() {
               placeholder: _vm.mdPlaceholder
             },
             on: {
+              input: _vm.handleInput,
               keydown: [
                 function($event) {
                   if (
@@ -37497,7 +37583,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(144)
+  __webpack_require__(145)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -37505,7 +37591,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -37543,13 +37629,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 145 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37560,6 +37646,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; //
+//
+//
 //
 //
 //
@@ -37630,11 +37718,19 @@ exports.default = new _MdComponent2.default({
     }, (0, _MdPropValidator2.default)('md-input-type', ['email', 'number', 'password', 'search', 'tel', 'text', 'url'])),
     mdPlaceholder: [String, Number],
     mdStatic: Boolean,
-    mdLimit: Number
+    mdLimit: Number,
+    mdCheckDuplicated: {
+      type: Boolean,
+      default: false
+    },
+    mdFormat: {
+      type: Function
+    }
   },
   data: function data() {
     return {
-      inputValue: ''
+      inputValue: '',
+      duplicatedChip: null
     };
   },
   computed: {
@@ -37645,22 +37741,42 @@ exports.default = new _MdComponent2.default({
     },
     modelRespectLimit: function modelRespectLimit() {
       return !this.mdLimit || this.value.length < this.mdLimit;
+    },
+    formattedInputValue: function formattedInputValue() {
+      if (!this.mdFormat) {
+        return this.inputValue;
+      }
+      return this.mdFormat(this.inputValue);
     }
   },
   methods: {
     insertChip: function insertChip(_ref) {
+      var _this = this;
+
       var target = _ref.target;
 
-      if (!this.inputValue || this.value.includes(this.inputValue) || !this.modelRespectLimit) {
+      var inputValue = this.formattedInputValue;
+
+      if (!inputValue || !this.modelRespectLimit) {
         return;
       }
-      this.value.push(this.inputValue);
+
+      if (this.value.includes(inputValue)) {
+        this.duplicatedChip = null;
+        // to trigger animate
+        this.$nextTick(function () {
+          _this.duplicatedChip = inputValue;
+        });
+        return;
+      }
+
+      this.value.push(inputValue);
       this.$emit('input', this.value);
-      this.$emit('md-insert', this.inputValue);
+      this.$emit('md-insert', inputValue);
       this.inputValue = '';
     },
     removeChip: function removeChip(chip) {
-      var _this = this;
+      var _this2 = this;
 
       var index = this.value.indexOf(chip);
 
@@ -37668,25 +37784,49 @@ exports.default = new _MdComponent2.default({
       this.$emit('input', this.value);
       this.$emit('md-delete', chip, index);
       this.$nextTick(function () {
-        return _this.$refs.input.$el.focus();
+        return _this2.$refs.input.$el.focus();
       });
     },
     handleBackRemove: function handleBackRemove() {
       if (!this.inputValue) {
         this.removeChip(this.value[this.value.length - 1]);
       }
+    },
+    handleInput: function handleInput() {
+      if (this.mdCheckDuplicated) {
+        this.checkDuplicated();
+      } else {
+        this.duplicatedChip = null;
+      }
+    },
+    checkDuplicated: function checkDuplicated() {
+      if (!this.value.includes(this.formattedInputValue)) {
+        this.duplicatedChip = null;
+        return false;
+      }
+
+      if (!this.mdCheckDuplicated) {
+        return false;
+      }
+
+      this.duplicatedChip = this.formattedInputValue;
+    }
+  },
+  watch: {
+    value: function value() {
+      this.checkDuplicated();
     }
   }
 });
 
 /***/ }),
-/* 146 */
+/* 147 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 147 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37704,11 +37844,11 @@ var _MdClearIcon = __webpack_require__(34);
 
 var _MdClearIcon2 = _interopRequireDefault(_MdClearIcon);
 
-var _MdPasswordOffIcon = __webpack_require__(154);
+var _MdPasswordOffIcon = __webpack_require__(155);
 
 var _MdPasswordOffIcon2 = _interopRequireDefault(_MdPasswordOffIcon);
 
-var _MdPasswordOnIcon = __webpack_require__(156);
+var _MdPasswordOnIcon = __webpack_require__(157);
 
 var _MdPasswordOnIcon2 = _interopRequireDefault(_MdPasswordOnIcon);
 
@@ -37784,7 +37924,7 @@ exports.default = new _MdComponent2.default({
 
   computed: {
     stringValue: function stringValue() {
-      return this.MdField.value && this.MdField.value.toString();
+      return (this.MdField.value || this.MdField.value === 0) && this.MdField.value.toString();
     },
     hasCounter: function hasCounter() {
       return this.mdCounter && (this.MdField.maxlength || this.MdField.counter);
@@ -37877,7 +38017,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 148 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37909,13 +38049,13 @@ exports.default = {
 //
 
 /***/ }),
-/* 149 */
+/* 150 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 150 */
+/* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37929,7 +38069,7 @@ var _MdComponent = __webpack_require__(2);
 
 var _MdComponent2 = _interopRequireDefault(_MdComponent);
 
-var _MdSvgLoader = __webpack_require__(151);
+var _MdSvgLoader = __webpack_require__(152);
 
 var _MdSvgLoader2 = _interopRequireDefault(_MdSvgLoader);
 
@@ -37954,14 +38094,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 151 */
+/* 152 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSvgLoader/MdSvgLoader.vue
-var MdSvgLoader = __webpack_require__(153);
+var MdSvgLoader = __webpack_require__(154);
 var MdSvgLoader_default = /*#__PURE__*/__webpack_require__.n(MdSvgLoader);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-0db3655e","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSvgLoader/MdSvgLoader.vue
@@ -37988,7 +38128,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(152)
+  __webpack_require__(153)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -37996,7 +38136,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -38034,13 +38174,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 152 */
+/* 153 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 153 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38166,14 +38306,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 154 */
+/* 155 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdPasswordOffIcon.vue
-var MdPasswordOffIcon = __webpack_require__(155);
+var MdPasswordOffIcon = __webpack_require__(156);
 var MdPasswordOffIcon_default = /*#__PURE__*/__webpack_require__.n(MdPasswordOffIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4113206a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdPasswordOffIcon.vue
@@ -38181,7 +38321,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -38235,7 +38375,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -38273,7 +38413,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 155 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38305,14 +38445,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 156 */
+/* 157 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdPasswordOnIcon.vue
-var MdPasswordOnIcon = __webpack_require__(157);
+var MdPasswordOnIcon = __webpack_require__(158);
 var MdPasswordOnIcon_default = /*#__PURE__*/__webpack_require__.n(MdPasswordOnIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-71ec8df4","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdPasswordOnIcon.vue
@@ -38320,7 +38460,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -38369,7 +38509,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -38407,7 +38547,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 157 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38439,7 +38579,7 @@ exports.default = {
 //
 
 /***/ }),
-/* 158 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38498,13 +38638,9 @@ exports.default = new _MdComponent2.default({
       return this.type === 'password';
     },
     listeners: function listeners() {
-      var _this = this;
-
-      return _extends({}, this.$listeners, {
-        input: function input(event) {
-          return _this.$emit('input', event.target.value);
-        }
-      });
+      var l = _extends({}, this.$listeners);
+      delete l.input;
+      return l;
     }
   },
   watch: {
@@ -38540,14 +38676,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 159 */
+/* 160 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdChips/MdChip.vue
-var MdChip = __webpack_require__(161);
+var MdChip = __webpack_require__(162);
 var MdChip_default = /*#__PURE__*/__webpack_require__.n(MdChip);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-84ba771c","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdChips/MdChip.vue
@@ -38619,7 +38755,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(160)
+  __webpack_require__(161)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -38627,7 +38763,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -38665,13 +38801,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 160 */
+/* 161 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 161 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38713,7 +38849,11 @@ exports.default = new _MdComponent2.default({
   props: {
     mdDisabled: Boolean,
     mdDeletable: Boolean,
-    mdClickable: Boolean
+    mdClickable: Boolean,
+    mdDuplicated: {
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
     chipClasses: function chipClasses() {
@@ -38721,7 +38861,8 @@ exports.default = new _MdComponent2.default({
         'md-disabled': this.mdDisabled,
         'md-deletable': this.mdDeletable,
         'md-clickable': this.mdClickable,
-        'md-focused': this.mdHasFocus
+        'md-focused': this.mdHasFocus,
+        'md-duplicated': this.mdDuplicated
       };
     }
   }
@@ -38745,7 +38886,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 162 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38771,7 +38912,7 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 163 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38806,7 +38947,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 164 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38820,7 +38961,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdDatepicker = __webpack_require__(165);
+var _MdDatepicker = __webpack_require__(166);
 
 var _MdDatepicker2 = _interopRequireDefault(_MdDatepicker);
 
@@ -38832,14 +38973,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 165 */
+/* 166 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDatepicker/MdDatepicker.vue
-var MdDatepicker = __webpack_require__(167);
+var MdDatepicker = __webpack_require__(168);
 var MdDatepicker_default = /*#__PURE__*/__webpack_require__.n(MdDatepicker);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-37fe792f","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDatepicker/MdDatepicker.vue
@@ -38849,7 +38990,10 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "md-field",
-    { staticClass: "md-datepicker" },
+    {
+      class: ["md-datepicker", { "md-native": !this.mdOverrideNative }],
+      attrs: { "md-clearable": "" }
+    },
     [
       _c("md-date-icon", {
         staticClass: "md-date-icon",
@@ -38862,7 +39006,7 @@ var render = function() {
       _vm._v(" "),
       _c("md-input", {
         ref: "input",
-        attrs: { type: "date", pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}" },
+        attrs: { type: _vm.type, pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}" },
         nativeOn: {
           focus: function($event) {
             _vm.onFocus($event)
@@ -38923,7 +39067,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(166)
+  __webpack_require__(167)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -38931,7 +39075,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -38969,13 +39113,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 166 */
+/* 167 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 167 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38989,11 +39133,11 @@ var _vue = __webpack_require__(7);
 
 var _vue2 = _interopRequireDefault(_vue);
 
-var _isFirefox = __webpack_require__(168);
+var _isFirefox = __webpack_require__(169);
 
 var _isFirefox2 = _interopRequireDefault(_isFirefox);
 
-var _format = __webpack_require__(169);
+var _format = __webpack_require__(170);
 
 var _format2 = _interopRequireDefault(_format);
 
@@ -39009,11 +39153,11 @@ var _MdOverlay = __webpack_require__(23);
 
 var _MdOverlay2 = _interopRequireDefault(_MdOverlay);
 
-var _MdDatepickerDialog = __webpack_require__(182);
+var _MdDatepickerDialog = __webpack_require__(183);
 
 var _MdDatepickerDialog2 = _interopRequireDefault(_MdDatepickerDialog);
 
-var _MdDateIcon = __webpack_require__(206);
+var _MdDateIcon = __webpack_require__(207);
 
 var _MdDateIcon2 = _interopRequireDefault(_MdDateIcon);
 
@@ -39058,6 +39202,10 @@ exports.default = {
     mdOpenOnFocus: {
       type: Boolean,
       default: true
+    },
+    mdOverrideNative: {
+      type: Boolean,
+      default: true
     }
   },
   data: function data() {
@@ -39066,6 +39214,11 @@ exports.default = {
       modelDate: null,
       selectedDate: null
     };
+  },
+  computed: {
+    type: function type() {
+      return this.mdOverrideNative ? 'text' : 'date';
+    }
   },
   watch: {
     selectedDate: function selectedDate(_selectedDate) {
@@ -39091,7 +39244,7 @@ exports.default = {
   },
   methods: {
     toggleDialog: function toggleDialog() {
-      if (!_isFirefox2.default) {
+      if (!_isFirefox2.default || this.mdOverrideNative) {
         this.showDialog = !this.showDialog;
       } else {
         this.$refs.input.$el.click();
@@ -39105,9 +39258,10 @@ exports.default = {
     dateToHTMLString: function dateToHTMLString(date) {
       if (date) {
         var formattedDate = null;
+        var dateFormat = this.$material.locale.dateFormat || 'YYYY-MM-DD';
 
         try {
-          formattedDate = (0, _format2.default)(date, 'YYYY-MM-DD');
+          formattedDate = (0, _format2.default)(date, dateFormat);
         } catch (error) {
           _vue2.default.util.warn('The datepicker value is not a valid date. Given value: ' + date + '.', this);
         }
@@ -39123,7 +39277,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 168 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -39132,15 +39286,15 @@ module.exports = typeof navigator !== 'undefined' && /^(?!.*Seamonkey)(?=.*Firef
 
 
 /***/ }),
-/* 169 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getDayOfYear = __webpack_require__(170)
-var getISOWeek = __webpack_require__(173)
+var getDayOfYear = __webpack_require__(171)
+var getISOWeek = __webpack_require__(174)
 var getISOYear = __webpack_require__(37)
 var parse = __webpack_require__(3)
 var isValid = __webpack_require__(38)
-var enLocale = __webpack_require__(176)
+var enLocale = __webpack_require__(177)
 
 /**
  * @category Common Helpers
@@ -39466,12 +39620,12 @@ module.exports = format
 
 
 /***/ }),
-/* 170 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
-var startOfYear = __webpack_require__(171)
-var differenceInCalendarDays = __webpack_require__(172)
+var startOfYear = __webpack_require__(172)
+var differenceInCalendarDays = __webpack_require__(173)
 
 /**
  * @category Day Helpers
@@ -39499,7 +39653,7 @@ module.exports = getDayOfYear
 
 
 /***/ }),
-/* 171 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -39532,7 +39686,7 @@ module.exports = startOfYear
 
 
 /***/ }),
-/* 172 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var startOfDay = __webpack_require__(21)
@@ -39579,12 +39733,12 @@ module.exports = differenceInCalendarDays
 
 
 /***/ }),
-/* 173 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
 var startOfISOWeek = __webpack_require__(22)
-var startOfISOYear = __webpack_require__(175)
+var startOfISOYear = __webpack_require__(176)
 
 var MILLISECONDS_IN_WEEK = 604800000
 
@@ -39619,7 +39773,7 @@ module.exports = getISOWeek
 
 
 /***/ }),
-/* 174 */
+/* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -39663,7 +39817,7 @@ module.exports = startOfWeek
 
 
 /***/ }),
-/* 175 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getISOYear = __webpack_require__(37)
@@ -39701,11 +39855,11 @@ module.exports = startOfISOYear
 
 
 /***/ }),
-/* 176 */
+/* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var buildDistanceInWordsLocale = __webpack_require__(177)
-var buildFormatLocale = __webpack_require__(178)
+var buildDistanceInWordsLocale = __webpack_require__(178)
+var buildFormatLocale = __webpack_require__(179)
 
 /**
  * @category Locales
@@ -39718,7 +39872,7 @@ module.exports = {
 
 
 /***/ }),
-/* 177 */
+/* 178 */
 /***/ (function(module, exports) {
 
 function buildDistanceInWordsLocale () {
@@ -39823,10 +39977,10 @@ module.exports = buildDistanceInWordsLocale
 
 
 /***/ }),
-/* 178 */
+/* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var buildFormattingTokensRegExp = __webpack_require__(179)
+var buildFormattingTokensRegExp = __webpack_require__(180)
 
 function buildFormatLocale () {
   // Note: in English, the names of days of the week and months are capitalized.
@@ -39917,7 +40071,7 @@ module.exports = buildFormatLocale
 
 
 /***/ }),
-/* 179 */
+/* 180 */
 /***/ (function(module, exports) {
 
 var commonFormatterKeys = [
@@ -39951,13 +40105,13 @@ module.exports = buildFormattingTokensRegExp
 
 
 /***/ }),
-/* 180 */
+/* 181 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 181 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40000,14 +40154,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 182 */
+/* 183 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDatepicker/MdDatepickerDialog.vue
-var MdDatepickerDialog = __webpack_require__(184);
+var MdDatepickerDialog = __webpack_require__(185);
 var MdDatepickerDialog_default = /*#__PURE__*/__webpack_require__.n(MdDatepickerDialog);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4f0a3d52","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDatepicker/MdDatepickerDialog.vue
@@ -40169,25 +40323,42 @@ var render = function() {
                                       _c(
                                         "div",
                                         { staticClass: "md-datepicker-week" },
-                                        _vm._l(_vm.locale.shorterDays, function(
-                                          day,
-                                          index
-                                        ) {
-                                          return _c("span", { key: index }, [
-                                            _vm._v(_vm._s(day))
-                                          ])
-                                        })
+                                        [
+                                          _vm._l(
+                                            _vm.locale.shorterDays,
+                                            function(day, index) {
+                                              return index >=
+                                                _vm.firstDayOfAWeek
+                                                ? _c("span", { key: index }, [
+                                                    _vm._v(_vm._s(day))
+                                                  ])
+                                                : _vm._e()
+                                            }
+                                          ),
+                                          _vm._v(" "),
+                                          _vm._l(
+                                            _vm.locale.shorterDays,
+                                            function(day, index) {
+                                              return index < _vm.firstDayOfAWeek
+                                                ? _c("span", { key: index }, [
+                                                    _vm._v(_vm._s(day))
+                                                  ])
+                                                : _vm._e()
+                                            }
+                                          )
+                                        ],
+                                        2
                                       ),
                                       _vm._v(" "),
                                       _c(
                                         "div",
                                         { staticClass: "md-datepicker-days" },
                                         [
-                                          _vm._l(_vm.firstDayOfMonth, function(
+                                          _vm._l(_vm.prefixEmptyDays, function(
                                             day
                                           ) {
                                             return _c("span", {
-                                              key: day,
+                                              key: "day-empty-" + day,
                                               staticClass: "md-datepicker-empty"
                                             })
                                           }),
@@ -40198,7 +40369,7 @@ var render = function() {
                                             return _c(
                                               "div",
                                               {
-                                                key: day,
+                                                key: "day-" + day,
                                                 staticClass: "md-datepicker-day"
                                               },
                                               [
@@ -40378,7 +40549,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(183)
+  __webpack_require__(184)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -40386,7 +40557,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -40424,13 +40595,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 183 */
+/* 184 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 184 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40444,19 +40615,19 @@ var _add_months = __webpack_require__(39);
 
 var _add_months2 = _interopRequireDefault(_add_months);
 
-var _start_of_month = __webpack_require__(185);
+var _start_of_month = __webpack_require__(186);
 
 var _start_of_month2 = _interopRequireDefault(_start_of_month);
 
-var _sub_months = __webpack_require__(186);
+var _sub_months = __webpack_require__(187);
 
 var _sub_months2 = _interopRequireDefault(_sub_months);
 
-var _get_date = __webpack_require__(187);
+var _get_date = __webpack_require__(188);
 
 var _get_date2 = _interopRequireDefault(_get_date);
 
-var _get_day = __webpack_require__(188);
+var _get_day = __webpack_require__(189);
 
 var _get_day2 = _interopRequireDefault(_get_day);
 
@@ -40464,35 +40635,35 @@ var _get_days_in_month = __webpack_require__(24);
 
 var _get_days_in_month2 = _interopRequireDefault(_get_days_in_month);
 
-var _get_month = __webpack_require__(189);
+var _get_month = __webpack_require__(190);
 
 var _get_month2 = _interopRequireDefault(_get_month);
 
-var _get_year = __webpack_require__(190);
+var _get_year = __webpack_require__(191);
 
 var _get_year2 = _interopRequireDefault(_get_year);
 
-var _is_equal = __webpack_require__(191);
+var _is_equal = __webpack_require__(192);
 
 var _is_equal2 = _interopRequireDefault(_is_equal);
 
-var _is_same_day = __webpack_require__(192);
+var _is_same_day = __webpack_require__(193);
 
 var _is_same_day2 = _interopRequireDefault(_is_same_day);
 
-var _is_today = __webpack_require__(193);
+var _is_today = __webpack_require__(194);
 
 var _is_today2 = _interopRequireDefault(_is_today);
 
-var _set_date = __webpack_require__(194);
+var _set_date = __webpack_require__(195);
 
 var _set_date2 = _interopRequireDefault(_set_date);
 
-var _set_month = __webpack_require__(195);
+var _set_month = __webpack_require__(196);
 
 var _set_month2 = _interopRequireDefault(_set_month);
 
-var _set_year = __webpack_require__(196);
+var _set_year = __webpack_require__(197);
 
 var _set_year2 = _interopRequireDefault(_set_year);
 
@@ -40504,11 +40675,11 @@ var _MdPopover = __webpack_require__(25);
 
 var _MdPopover2 = _interopRequireDefault(_MdPopover);
 
-var _MdArrowRightIcon = __webpack_require__(200);
+var _MdArrowRightIcon = __webpack_require__(201);
 
 var _MdArrowRightIcon2 = _interopRequireDefault(_MdArrowRightIcon);
 
-var _MdArrowLeftIcon = __webpack_require__(202);
+var _MdArrowLeftIcon = __webpack_require__(203);
 
 var _MdArrowLeftIcon2 = _interopRequireDefault(_MdArrowLeftIcon);
 
@@ -40607,6 +40778,9 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 //
 //
 //
+//
+
+var daysInAWeek = 7;
 
 var getElements = function getElements(el, selector) {
   if (el && el.querySelector) {
@@ -40640,6 +40814,16 @@ exports.default = new _MdComponent2.default({
     };
   },
   computed: {
+    firstDayOfAWeek: function firstDayOfAWeek() {
+      // normalize
+      var firstDayOfAWeek = Number(this.$material.locale.firstDayOfAWeek);
+      if (Number.isNaN(firstDayOfAWeek) || !Number.isFinite(firstDayOfAWeek)) {
+        return 0;
+      }
+      firstDayOfAWeek = Math.floor(firstDayOfAWeek) % daysInAWeek;
+      firstDayOfAWeek += firstDayOfAWeek < 0 ? daysInAWeek : 0;
+      return firstDayOfAWeek;
+    },
     locale: function locale() {
       return this.$material.locale;
     },
@@ -40665,6 +40849,11 @@ exports.default = new _MdComponent2.default({
     },
     firstDayOfMonth: function firstDayOfMonth() {
       return (0, _start_of_month2.default)(this.currentDate).getDay();
+    },
+    prefixEmptyDays: function prefixEmptyDays() {
+      var prefixEmptyDays = this.firstDayOfMonth - this.firstDayOfAWeek;
+      prefixEmptyDays += prefixEmptyDays < 0 ? daysInAWeek : 0;
+      return prefixEmptyDays;
     },
     daysInMonth: function daysInMonth() {
       return (0, _get_days_in_month2.default)(this.currentDate);
@@ -40848,6 +41037,7 @@ exports.default = new _MdComponent2.default({
     selectDate: function selectDate(day) {
       this.currentDate = (0, _set_date2.default)(this.currentDate, day);
       this.selectedDate = this.currentDate;
+      this.$emit('update:mdDate', this.selectedDate);
     },
     closeDialog: function closeDialog() {
       this.$emit('md-closed');
@@ -40878,7 +41068,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 185 */
+/* 186 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -40910,7 +41100,7 @@ module.exports = startOfMonth
 
 
 /***/ }),
-/* 186 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var addMonths = __webpack_require__(39)
@@ -40940,7 +41130,7 @@ module.exports = subMonths
 
 
 /***/ }),
-/* 187 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -40970,7 +41160,7 @@ module.exports = getDate
 
 
 /***/ }),
-/* 188 */
+/* 189 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41000,7 +41190,7 @@ module.exports = getDay
 
 
 /***/ }),
-/* 189 */
+/* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41030,7 +41220,7 @@ module.exports = getMonth
 
 
 /***/ }),
-/* 190 */
+/* 191 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41060,7 +41250,7 @@ module.exports = getYear
 
 
 /***/ }),
-/* 191 */
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41094,7 +41284,7 @@ module.exports = isEqual
 
 
 /***/ }),
-/* 192 */
+/* 193 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var startOfDay = __webpack_require__(21)
@@ -41129,7 +41319,7 @@ module.exports = isSameDay
 
 
 /***/ }),
-/* 193 */
+/* 194 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var startOfDay = __webpack_require__(21)
@@ -41157,7 +41347,7 @@ module.exports = isToday
 
 
 /***/ }),
-/* 194 */
+/* 195 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41189,7 +41379,7 @@ module.exports = setDate
 
 
 /***/ }),
-/* 195 */
+/* 196 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41231,7 +41421,7 @@ module.exports = setMonth
 
 
 /***/ }),
-/* 196 */
+/* 197 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(3)
@@ -41263,13 +41453,13 @@ module.exports = setYear
 
 
 /***/ }),
-/* 197 */
+/* 198 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 198 */
+/* 199 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41281,7 +41471,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _popper = __webpack_require__(199);
+var _popper = __webpack_require__(200);
 
 var _popper2 = _interopRequireDefault(_popper);
 
@@ -41420,7 +41610,7 @@ exports.default = {
                   options = (0, _deepmerge2.default)(this.getPopperOptions(), this.mdSettings);
 
 
-                  if (this.$el.constructor.name.toLowerCase() !== 'comment') {
+                  if (this.$el.nodeType !== Node.COMMENT_NODE) {
                     this.popperInstance = new _popper2.default(this.originalParentEl, this.$el, options);
                   }
                 }
@@ -41464,14 +41654,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 199 */
+/* 200 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function(global) {/**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
- * @version 1.12.6
+ * @version 1.12.9
  * @license
  * Copyright (c) 2016 Federico Zivolo and contributors
  *
@@ -41493,7 +41683,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-var isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 var longerTimeoutBrowsers = ['Edge', 'Trident', 'Firefox'];
 var timeoutDuration = 0;
 for (var i = 0; i < longerTimeoutBrowsers.length; i += 1) {
@@ -41510,7 +41700,7 @@ function microtaskDebounce(fn) {
       return;
     }
     called = true;
-    Promise.resolve().then(function () {
+    window.Promise.resolve().then(function () {
       called = false;
       fn();
     });
@@ -41567,7 +41757,7 @@ function getStyleComputedProperty(element, property) {
     return [];
   }
   // NOTE: 1 DOM access here
-  var css = window.getComputedStyle(element, null);
+  var css = getComputedStyle(element, null);
   return property ? css[property] : css;
 }
 
@@ -41595,7 +41785,7 @@ function getParentNode(element) {
 function getScrollParent(element) {
   // Return body, `getScroll` will take care to get the correct `scrollTop` from it
   if (!element) {
-    return window.document.body;
+    return document.body;
   }
 
   switch (element.nodeName) {
@@ -41637,7 +41827,7 @@ function getOffsetParent(element) {
       return element.ownerDocument.documentElement;
     }
 
-    return window.document.documentElement;
+    return document.documentElement;
   }
 
   // .offsetParent will return the closest TD or TABLE in case
@@ -41684,7 +41874,7 @@ function getRoot(node) {
 function findCommonOffsetParent(element1, element2) {
   // This check is needed to avoid errors in case one of the elements isn't defined for any reason
   if (!element1 || !element1.nodeType || !element2 || !element2.nodeType) {
-    return window.document.documentElement;
+    return document.documentElement;
   }
 
   // Here we make sure to give as "start" the element that comes first in the DOM
@@ -41776,7 +41966,7 @@ function getBordersSize(styles, axis) {
   var sideA = axis === 'x' ? 'Left' : 'Top';
   var sideB = sideA === 'Left' ? 'Right' : 'Bottom';
 
-  return +styles['border' + sideA + 'Width'].split('px')[0] + +styles['border' + sideB + 'Width'].split('px')[0];
+  return parseFloat(styles['border' + sideA + 'Width'], 10) + parseFloat(styles['border' + sideB + 'Width'], 10);
 }
 
 /**
@@ -41799,9 +41989,9 @@ function getSize(axis, body, html, computedStyle) {
 }
 
 function getWindowSizes() {
-  var body = window.document.body;
-  var html = window.document.documentElement;
-  var computedStyle = isIE10$1() && window.getComputedStyle(html);
+  var body = document.body;
+  var html = document.documentElement;
+  var computedStyle = isIE10$1() && getComputedStyle(html);
 
   return {
     height: getSize('Height', body, html, computedStyle),
@@ -41944,8 +42134,8 @@ function getOffsetRectRelativeToArbitraryNode(children, parent) {
   var scrollParent = getScrollParent(children);
 
   var styles = getStyleComputedProperty(parent);
-  var borderTopWidth = +styles.borderTopWidth.split('px')[0];
-  var borderLeftWidth = +styles.borderLeftWidth.split('px')[0];
+  var borderTopWidth = parseFloat(styles.borderTopWidth, 10);
+  var borderLeftWidth = parseFloat(styles.borderLeftWidth, 10);
 
   var offsets = getClientRect({
     top: childrenRect.top - parentRect.top - borderTopWidth,
@@ -41961,8 +42151,8 @@ function getOffsetRectRelativeToArbitraryNode(children, parent) {
   // differently when margins are applied to it. The margins are included in
   // the box of the documentElement, in the other cases not.
   if (!isIE10 && isHTML) {
-    var marginTop = +styles.marginTop.split('px')[0];
-    var marginLeft = +styles.marginLeft.split('px')[0];
+    var marginTop = parseFloat(styles.marginTop, 10);
+    var marginLeft = parseFloat(styles.marginLeft, 10);
 
     offsets.top -= borderTopWidth - marginTop;
     offsets.bottom -= borderTopWidth - marginTop;
@@ -42041,7 +42231,7 @@ function getBoundaries(popper, reference, padding, boundariesElement) {
     // Handle other cases based on DOM element used as boundaries
     var boundariesNode = void 0;
     if (boundariesElement === 'scrollParent') {
-      boundariesNode = getScrollParent(getParentNode(popper));
+      boundariesNode = getScrollParent(getParentNode(reference));
       if (boundariesNode.nodeName === 'BODY') {
         boundariesNode = popper.ownerDocument.documentElement;
       }
@@ -42167,7 +42357,7 @@ function getReferenceOffsets(state, popper, reference) {
  * @returns {Object} object containing width and height properties
  */
 function getOuterSizes(element) {
-  var styles = window.getComputedStyle(element);
+  var styles = getComputedStyle(element);
   var x = parseFloat(styles.marginTop) + parseFloat(styles.marginBottom);
   var y = parseFloat(styles.marginLeft) + parseFloat(styles.marginRight);
   var result = {
@@ -42384,7 +42574,7 @@ function getSupportedPropertyName(property) {
   for (var i = 0; i < prefixes.length - 1; i++) {
     var prefix = prefixes[i];
     var toCheck = prefix ? '' + prefix + upperProp : property;
-    if (typeof window.document.body.style[toCheck] !== 'undefined') {
+    if (typeof document.body.style[toCheck] !== 'undefined') {
       return toCheck;
     }
   }
@@ -42503,7 +42693,7 @@ function removeEventListeners(reference, state) {
  */
 function disableEventListeners() {
   if (this.state.eventsEnabled) {
-    window.cancelAnimationFrame(this.scheduleUpdate);
+    cancelAnimationFrame(this.scheduleUpdate);
     this.state = removeEventListeners(this.reference, this.state);
   }
 }
@@ -42743,6 +42933,8 @@ function isModifierRequired(modifiers, requestingName, requestedName) {
  * @returns {Object} The data object, properly modified
  */
 function arrow(data, options) {
+  var _data$offsets$arrow;
+
   // arrow depends on keepTogether in order to work
   if (!isModifierRequired(data.instance.modifiers, 'arrow', 'keepTogether')) {
     return data;
@@ -42794,22 +42986,23 @@ function arrow(data, options) {
   if (reference[side] + arrowElementSize > popper[opSide]) {
     data.offsets.popper[side] += reference[side] + arrowElementSize - popper[opSide];
   }
+  data.offsets.popper = getClientRect(data.offsets.popper);
 
   // compute center of the popper
   var center = reference[side] + reference[len] / 2 - arrowElementSize / 2;
 
   // Compute the sideValue using the updated popper offsets
   // take popper margin in account because we don't have this info available
-  var popperMarginSide = getStyleComputedProperty(data.instance.popper, 'margin' + sideCapitalized).replace('px', '');
-  var sideValue = center - getClientRect(data.offsets.popper)[side] - popperMarginSide;
+  var css = getStyleComputedProperty(data.instance.popper);
+  var popperMarginSide = parseFloat(css['margin' + sideCapitalized], 10);
+  var popperBorderSide = parseFloat(css['border' + sideCapitalized + 'Width'], 10);
+  var sideValue = center - data.offsets.popper[side] - popperMarginSide - popperBorderSide;
 
   // prevent arrowElement from being placed not contiguously to its popper
   sideValue = Math.max(Math.min(popper[len] - arrowElementSize, sideValue), 0);
 
   data.arrowElement = arrowElement;
-  data.offsets.arrow = {};
-  data.offsets.arrow[side] = Math.round(sideValue);
-  data.offsets.arrow[altSide] = ''; // make sure to unset any eventual altSide value from the DOM node
+  data.offsets.arrow = (_data$offsets$arrow = {}, defineProperty(_data$offsets$arrow, side, Math.round(sideValue)), defineProperty(_data$offsets$arrow, altSide, ''), _data$offsets$arrow);
 
   return data;
 }
@@ -43907,14 +44100,14 @@ Popper.Defaults = Defaults;
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(17)))
 
 /***/ }),
-/* 200 */
+/* 201 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdArrowRightIcon.vue
-var MdArrowRightIcon = __webpack_require__(201);
+var MdArrowRightIcon = __webpack_require__(202);
 var MdArrowRightIcon_default = /*#__PURE__*/__webpack_require__.n(MdArrowRightIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-1e23e1bf","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdArrowRightIcon.vue
@@ -43922,7 +44115,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -43968,7 +44161,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -44006,7 +44199,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 201 */
+/* 202 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44038,14 +44231,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 202 */
+/* 203 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdArrowLeftIcon.vue
-var MdArrowLeftIcon = __webpack_require__(203);
+var MdArrowLeftIcon = __webpack_require__(204);
 var MdArrowLeftIcon_default = /*#__PURE__*/__webpack_require__.n(MdArrowLeftIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-5cc7b6f4","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdArrowLeftIcon.vue
@@ -44053,7 +44246,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -44099,7 +44292,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -44137,7 +44330,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 203 */
+/* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44169,13 +44362,13 @@ exports.default = {
 //
 
 /***/ }),
-/* 204 */
+/* 205 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 205 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44311,14 +44504,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 206 */
+/* 207 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdDateIcon.vue
-var MdDateIcon = __webpack_require__(207);
+var MdDateIcon = __webpack_require__(208);
 var MdDateIcon_default = /*#__PURE__*/__webpack_require__.n(MdDateIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-644b79cc","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdDateIcon.vue
@@ -44326,7 +44519,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -44375,7 +44568,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -44413,7 +44606,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 207 */
+/* 208 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44445,7 +44638,7 @@ exports.default = {
 //
 
 /***/ }),
-/* 208 */
+/* 209 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44463,15 +44656,15 @@ var _MdDialog = __webpack_require__(10);
 
 var _MdDialog2 = _interopRequireDefault(_MdDialog);
 
-var _MdDialogTitle = __webpack_require__(209);
+var _MdDialogTitle = __webpack_require__(210);
 
 var _MdDialogTitle2 = _interopRequireDefault(_MdDialogTitle);
 
-var _MdDialogContent = __webpack_require__(212);
+var _MdDialogContent = __webpack_require__(213);
 
 var _MdDialogContent2 = _interopRequireDefault(_MdDialogContent);
 
-var _MdDialogActions = __webpack_require__(215);
+var _MdDialogActions = __webpack_require__(216);
 
 var _MdDialogActions2 = _interopRequireDefault(_MdDialogActions);
 
@@ -44486,14 +44679,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 209 */
+/* 210 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialogTitle.vue
-var MdDialogTitle = __webpack_require__(211);
+var MdDialogTitle = __webpack_require__(212);
 var MdDialogTitle_default = /*#__PURE__*/__webpack_require__.n(MdDialogTitle);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-879275ce","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialogTitle.vue
@@ -44522,7 +44715,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(210)
+  __webpack_require__(211)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -44530,7 +44723,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -44568,13 +44761,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 210 */
+/* 211 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44595,14 +44788,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialogContent.vue
-var MdDialogContent = __webpack_require__(214);
+var MdDialogContent = __webpack_require__(215);
 var MdDialogContent_default = /*#__PURE__*/__webpack_require__.n(MdDialogContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-dae90f0c","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialogContent.vue
@@ -44626,7 +44819,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(213)
+  __webpack_require__(214)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -44634,7 +44827,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -44672,13 +44865,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44699,14 +44892,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 215 */
+/* 216 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialogActions.vue
-var MdDialogActions = __webpack_require__(217);
+var MdDialogActions = __webpack_require__(218);
 var MdDialogActions_default = /*#__PURE__*/__webpack_require__.n(MdDialogActions);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-092eaafe","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialogActions.vue
@@ -44730,7 +44923,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(216)
+  __webpack_require__(217)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -44738,7 +44931,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -44776,13 +44969,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 216 */
+/* 217 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 217 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44803,7 +44996,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 218 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44821,7 +45014,7 @@ var _MdDialog = __webpack_require__(10);
 
 var _MdDialog2 = _interopRequireDefault(_MdDialog);
 
-var _MdDialogAlert = __webpack_require__(219);
+var _MdDialogAlert = __webpack_require__(220);
 
 var _MdDialogAlert2 = _interopRequireDefault(_MdDialogAlert);
 
@@ -44834,14 +45027,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 219 */
+/* 220 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialogAlert/MdDialogAlert.vue
-var MdDialogAlert = __webpack_require__(220);
+var MdDialogAlert = __webpack_require__(221);
 var MdDialogAlert_default = /*#__PURE__*/__webpack_require__.n(MdDialogAlert);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-197ab94b","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialogAlert/MdDialogAlert.vue
@@ -44911,7 +45104,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -44949,7 +45142,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 220 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44983,7 +45176,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 221 */
+/* 222 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45001,7 +45194,7 @@ var _MdDialog = __webpack_require__(10);
 
 var _MdDialog2 = _interopRequireDefault(_MdDialog);
 
-var _MdDialogConfirm = __webpack_require__(222);
+var _MdDialogConfirm = __webpack_require__(223);
 
 var _MdDialogConfirm2 = _interopRequireDefault(_MdDialogConfirm);
 
@@ -45014,14 +45207,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 222 */
+/* 223 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialogConfirm/MdDialogConfirm.vue
-var MdDialogConfirm = __webpack_require__(223);
+var MdDialogConfirm = __webpack_require__(224);
 var MdDialogConfirm_default = /*#__PURE__*/__webpack_require__.n(MdDialogConfirm);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-acc7afda","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialogConfirm/MdDialogConfirm.vue
@@ -45090,7 +45283,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -45128,7 +45321,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 223 */
+/* 224 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45177,7 +45370,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 224 */
+/* 225 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45195,7 +45388,7 @@ var _MdDialog = __webpack_require__(10);
 
 var _MdDialog2 = _interopRequireDefault(_MdDialog);
 
-var _MdDialogPrompt = __webpack_require__(225);
+var _MdDialogPrompt = __webpack_require__(226);
 
 var _MdDialogPrompt2 = _interopRequireDefault(_MdDialogPrompt);
 
@@ -45208,14 +45401,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 225 */
+/* 226 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDialog/MdDialogPrompt/MdDialogPrompt.vue
-var MdDialogPrompt = __webpack_require__(226);
+var MdDialogPrompt = __webpack_require__(227);
 var MdDialogPrompt_default = /*#__PURE__*/__webpack_require__.n(MdDialogPrompt);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7b3c8c22","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDialog/MdDialogPrompt/MdDialogPrompt.vue
@@ -45324,7 +45517,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -45362,7 +45555,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 226 */
+/* 227 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45450,7 +45643,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 227 */
+/* 228 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45464,7 +45657,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdDivider = __webpack_require__(228);
+var _MdDivider = __webpack_require__(229);
 
 var _MdDivider2 = _interopRequireDefault(_MdDivider);
 
@@ -45476,14 +45669,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 228 */
+/* 229 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDivider/MdDivider.vue
-var MdDivider = __webpack_require__(230);
+var MdDivider = __webpack_require__(231);
 var MdDivider_default = /*#__PURE__*/__webpack_require__.n(MdDivider);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-8ca7ced6","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDivider/MdDivider.vue
@@ -45509,7 +45702,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(229)
+  __webpack_require__(230)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -45517,7 +45710,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -45555,13 +45748,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 229 */
+/* 230 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 230 */
+/* 231 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45591,7 +45784,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 231 */
+/* 232 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45605,7 +45798,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdDrawer = __webpack_require__(232);
+var _MdDrawer = __webpack_require__(233);
 
 var _MdDrawer2 = _interopRequireDefault(_MdDrawer);
 
@@ -45617,14 +45810,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 232 */
+/* 233 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdDrawer/MdDrawer.vue
-var MdDrawer = __webpack_require__(234);
+var MdDrawer = __webpack_require__(235);
 var MdDrawer_default = /*#__PURE__*/__webpack_require__.n(MdDrawer);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-801caa62","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdDrawer/MdDrawer.vue
@@ -45668,7 +45861,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(233)
+  __webpack_require__(234)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -45676,7 +45869,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -45714,13 +45907,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 233 */
+/* 234 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 234 */
+/* 235 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45833,7 +46026,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 235 */
+/* 236 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45843,18 +46036,18 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-__webpack_require__(236);
+__webpack_require__(237);
 
 exports.default = function (Vue) {};
 
 /***/ }),
-/* 236 */
+/* 237 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 237 */
+/* 238 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45880,13 +46073,13 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 238 */
+/* 239 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 239 */
+/* 240 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45950,7 +46143,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 240 */
+/* 241 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45968,7 +46161,7 @@ var _MdIcon = __webpack_require__(43);
 
 var _MdIcon2 = _interopRequireDefault(_MdIcon);
 
-var _MdSelect = __webpack_require__(241);
+var _MdSelect = __webpack_require__(242);
 
 var _MdSelect2 = _interopRequireDefault(_MdSelect);
 
@@ -45976,7 +46169,7 @@ var _MdField = __webpack_require__(20);
 
 var _MdField2 = _interopRequireDefault(_MdField);
 
-var _MdFile = __webpack_require__(260);
+var _MdFile = __webpack_require__(261);
 
 var _MdFile2 = _interopRequireDefault(_MdFile);
 
@@ -45984,7 +46177,7 @@ var _MdInput = __webpack_require__(14);
 
 var _MdInput2 = _interopRequireDefault(_MdInput);
 
-var _MdTextarea = __webpack_require__(265);
+var _MdTextarea = __webpack_require__(266);
 
 var _MdTextarea2 = _interopRequireDefault(_MdTextarea);
 
@@ -46001,7 +46194,7 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 241 */
+/* 242 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46015,15 +46208,15 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdSelect = __webpack_require__(242);
+var _MdSelect = __webpack_require__(243);
 
 var _MdSelect2 = _interopRequireDefault(_MdSelect);
 
-var _MdOption = __webpack_require__(254);
+var _MdOption = __webpack_require__(255);
 
 var _MdOption2 = _interopRequireDefault(_MdOption);
 
-var _MdOptgroup = __webpack_require__(257);
+var _MdOptgroup = __webpack_require__(258);
 
 var _MdOptgroup2 = _interopRequireDefault(_MdOptgroup);
 
@@ -46037,14 +46230,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 242 */
+/* 243 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdSelect/MdSelect.vue
-var MdSelect = __webpack_require__(244);
+var MdSelect = __webpack_require__(245);
 var MdSelect_default = /*#__PURE__*/__webpack_require__.n(MdSelect);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7e35dfa3","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdSelect/MdSelect.vue
@@ -46061,13 +46254,13 @@ var render = function() {
         "md-close-on-select": false,
         "md-active": _vm.showSelect,
         "md-offset-x": _vm.offset.x,
-        "md-offset-y": _vm.offset.y
+        "md-offset-y": _vm.offset.y,
+        "md-dense": _vm.mdDense
       },
       on: {
         "update:mdActive": function($event) {
           _vm.showSelect = $event
         },
-        "md-opened": _vm.onOpen,
         "md-closed": _vm.onClose
       }
     },
@@ -46158,18 +46351,33 @@ var render = function() {
               ref: "menu",
               staticClass: "md-select-menu",
               style: _vm.menuStyles,
-              attrs: {
-                "md-content-class": _vm.mdClass,
-                "md-list-class": _vm.mdDense && "md-dense",
-                id: _vm.uniqueId
-              }
+              attrs: { "md-content-class": _vm.mdClass },
+              on: { enter: _vm.onMenuEnter }
             },
-            [_vm._t("default")],
+            [_vm.showSelect ? _vm._t("default") : _vm._e()],
             2
           )
         ],
         1
       ),
+      _vm._v(" "),
+      !_vm.showSelect
+        ? _c(
+            "div",
+            {
+              directives: [
+                {
+                  name: "show",
+                  rawName: "v-show",
+                  value: false,
+                  expression: "false"
+                }
+              ]
+            },
+            [_vm._t("default")],
+            2
+          )
+        : _vm._e(),
       _vm._v(" "),
       _c("input", {
         directives: [
@@ -46245,7 +46453,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(243)
+  __webpack_require__(244)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -46253,7 +46461,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -46291,13 +46499,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 243 */
+/* 244 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 244 */
+/* 245 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46352,20 +46560,19 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 //
 //
 //
+//
+//
+//
 
 var _raf = __webpack_require__(9);
 
 var _raf2 = _interopRequireDefault(_raf);
 
-var _MdUuid = __webpack_require__(6);
-
-var _MdUuid2 = _interopRequireDefault(_MdUuid);
-
 var _MdComponent = __webpack_require__(2);
 
 var _MdComponent2 = _interopRequireDefault(_MdComponent);
 
-var _MdDropDownIcon = __webpack_require__(245);
+var _MdDropDownIcon = __webpack_require__(246);
 
 var _MdDropDownIcon2 = _interopRequireDefault(_MdDropDownIcon);
 
@@ -46413,7 +46620,6 @@ exports.default = {
   inject: ['MdField'],
   data: function data() {
     return {
-      uniqueId: 'md-select-menu-' + (0, _MdUuid2.default)(),
       menuStyles: {},
       offset: {
         x: defaultOffset.x,
@@ -46425,7 +46631,7 @@ exports.default = {
         items: {},
         label: null,
         multiple: false,
-        modelValue: this.model,
+        modelValue: this.localValue,
         setValue: this.setValue,
         setContent: this.setContent,
         setMultipleValue: this.setMultipleValue,
@@ -46449,8 +46655,10 @@ exports.default = {
   watch: {
     localValue: {
       immediate: true,
-      handler: function handler() {
+      handler: function handler(val) {
         this.setFieldContent();
+        this.MdSelect.modelValue = this.localValue;
+        this.emitSelected(val);
       }
     },
     multiple: {
@@ -46463,9 +46671,6 @@ exports.default = {
           return _this.initialLocalValueByDefault();
         });
       }
-    },
-    model: function model() {
-      this.MdSelect.modelValue = this.model;
     }
   },
   methods: {
@@ -46486,13 +46691,8 @@ exports.default = {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
-                return this.$nextTick();
-
-              case 2:
-
                 if (!this.$isServer) {
-                  menu = document.getElementById(this.uniqueId);
+                  menu = this.$refs.menu.$refs.container;
 
 
                   if (menu) {
@@ -46512,7 +46712,7 @@ exports.default = {
                   }
                 }
 
-              case 3:
+              case 1:
               case 'end':
                 return _context.stop();
             }
@@ -46526,16 +46726,14 @@ exports.default = {
 
       return setOffsets;
     }(),
-    onOpen: function onOpen() {
-      var _this2 = this;
-
-      this.$emit('md-opened');
-      if (this.didMount) {
-        this.setOffsets();
-        window.setTimeout(function () {
-          _this2.MdField.focused = true;
-        }, 10);
+    onMenuEnter: function onMenuEnter() {
+      if (!this.didMount) {
+        return;
       }
+
+      this.setOffsets();
+      this.MdField.focused = true;
+      this.$emit('md-opened');
     },
     applyHighlight: function applyHighlight() {
       this.MdField.focused = false;
@@ -46574,11 +46772,9 @@ exports.default = {
       } else {
         this.localValue = this.arrayAccessorRemove(this.localValue, index);
       }
-      this.emitSelected(this.localValue);
     },
     setValue: function setValue(newValue) {
       this.model = newValue;
-      this.emitSelected(newValue);
       this.setFieldValue();
       this.showSelect = false;
     },
@@ -46600,7 +46796,7 @@ exports.default = {
       this.setFieldValue();
     },
     setMultipleContentByValue: function setMultipleContentByValue() {
-      var _this3 = this;
+      var _this2 = this;
 
       if (!this.localValue) {
         this.initialLocalValueByDefault();
@@ -46608,7 +46804,7 @@ exports.default = {
       var content = [];
 
       this.localValue.forEach(function (item) {
-        var textContent = _this3.MdSelect.items[item];
+        var textContent = _this2.MdSelect.items[item];
 
         if (textContent) {
           content.push(textContent);
@@ -46671,14 +46867,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 245 */
+/* 246 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdDropDownIcon.vue
-var MdDropDownIcon = __webpack_require__(246);
+var MdDropDownIcon = __webpack_require__(247);
 var MdDropDownIcon_default = /*#__PURE__*/__webpack_require__.n(MdDropDownIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-44db031d","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdDropDownIcon.vue
@@ -46686,7 +46882,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -46730,7 +46926,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -46768,7 +46964,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 246 */
+/* 247 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46800,13 +46996,13 @@ exports.default = {
 //
 
 /***/ }),
-/* 247 */
+/* 248 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 248 */
+/* 249 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46868,7 +47064,8 @@ exports.default = {
         dense: this.mdDense,
         closeOnSelect: this.mdCloseOnSelect,
         bodyClickObserver: null,
-        windowResizeObserver: null
+        windowResizeObserver: null,
+        $el: this.$el
       }
     };
   },
@@ -46917,7 +47114,6 @@ exports.default = {
   },
   methods: {
     toggleContent: function toggleContent($event) {
-      $event.stopPropagation();
       this.MdMenu.active = !this.MdMenu.active;
     }
   },
@@ -46927,10 +47123,11 @@ exports.default = {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              _context.next = 2;
+              this.MdMenu.$el = this.$el;
+              _context.next = 3;
               return this.$nextTick();
 
-            case 2:
+            case 3:
 
               this.triggerEl = this.$el.querySelector('[md-menu-trigger]');
 
@@ -46938,7 +47135,7 @@ exports.default = {
                 this.triggerEl.addEventListener('click', this.toggleContent);
               }
 
-            case 4:
+            case 5:
             case 'end':
               return _context.stop();
           }
@@ -46960,13 +47157,13 @@ exports.default = {
 };
 
 /***/ }),
-/* 249 */
+/* 250 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 250 */
+/* 251 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46990,7 +47187,7 @@ var _MdObserveEvent = __webpack_require__(46);
 
 var _MdObserveEvent2 = _interopRequireDefault(_MdObserveEvent);
 
-var _MdResizeObserver = __webpack_require__(251);
+var _MdResizeObserver = __webpack_require__(252);
 
 var _MdResizeObserver2 = _interopRequireDefault(_MdResizeObserver);
 
@@ -47011,6 +47208,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; } //
+//
 //
 //
 //
@@ -47053,6 +47251,11 @@ exports.default = new _MdComponent2.default({
     };
   },
   computed: {
+    filteredAttrs: function filteredAttrs() {
+      var attrs = this.$attrs;
+      delete attrs.id;
+      return attrs;
+    },
     highlightedItem: function highlightedItem() {
       return this.highlightItems[this.highlightIndex];
     },
@@ -47226,8 +47429,9 @@ exports.default = new _MdComponent2.default({
       if (document) {
         this.MdMenu.bodyClickObserver = new _MdObserveEvent2.default(document.body, 'click', function ($event) {
           $event.stopPropagation();
-
-          if (!_this2.$el.contains($event.target)) {
+          var isMdMenu = _this2.MdMenu.$el ? _this2.MdMenu.$el.contains($event.target) : false;
+          var isMenuContentEl = _this2.$refs.menu ? _this2.$refs.menu.contains($event.target) : false;
+          if (!_this2.$el.contains($event.target) && !isMdMenu && !isMenuContentEl) {
             _this2.MdMenu.active = false;
             _this2.MdMenu.bodyClickObserver.destroy();
             _this2.MdMenu.windowResizeObserver.destroy();
@@ -47291,7 +47495,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 251 */
+/* 252 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47327,13 +47531,13 @@ exports.default = function () {
 };
 
 /***/ }),
-/* 252 */
+/* 253 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 253 */
+/* 254 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47359,14 +47563,14 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 254 */
+/* 255 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdSelect/MdOption.vue
-var MdOption = __webpack_require__(256);
+var MdOption = __webpack_require__(257);
 var MdOption_default = /*#__PURE__*/__webpack_require__.n(MdOption);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-32c8ce9c","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdSelect/MdOption.vue
@@ -47385,6 +47589,7 @@ var render = function() {
       _vm.MdSelect.multiple
         ? _c("md-checkbox", {
             staticClass: "md-primary",
+            attrs: { disabled: _vm.isDisabled },
             model: {
               value: _vm.isChecked,
               callback: function($$v) {
@@ -47419,7 +47624,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(255)
+  __webpack_require__(256)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -47427,7 +47632,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -47465,13 +47670,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 255 */
+/* 256 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 256 */
+/* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47530,8 +47735,17 @@ exports.default = {
     }
   },
   watch: {
-    inputLabel: function inputLabel() {
+    selectValue: function selectValue() {
       this.setIsSelected();
+    },
+    isChecked: function isChecked(val) {
+      if (val === this.isSelected) {
+        return;
+      }
+      this.setSelection();
+    },
+    isSelected: function isSelected(val) {
+      this.isChecked = val;
     }
   },
   methods: {
@@ -47545,17 +47759,24 @@ exports.default = {
       return slot ? slot[0].text.trim() : '';
     },
     setIsSelected: function setIsSelected() {
-      this.isSelected = this.inputLabel === this.getTextContent();
+      if (!this.isMultiple) {
+        this.isSelected = this.selectValue === this.value;
+        return;
+      }
+      if (this.selectValue === undefined) {
+        this.isSelected = false;
+        return;
+      }
+      this.isSelected = this.selectValue.includes(this.value);
     },
     setSingleSelection: function setSingleSelection() {
       this.MdSelect.setValue(this.value);
     },
     setMultipleSelection: function setMultipleSelection() {
-      this.isChecked = !this.isChecked;
       this.MdSelect.setMultipleValue(this.value);
     },
     setSelection: function setSelection() {
-      if (!this.disabled) {
+      if (!this.isDisabled) {
         if (this.isMultiple) {
           this.setMultipleSelection();
         } else {
@@ -47573,10 +47794,6 @@ exports.default = {
   created: function created() {
     this.setItem();
     this.setIsSelected();
-
-    if (this.isMultiple && this.selectValue && this.selectValue.length) {
-      this.isChecked = this.selectValue.includes(this.value);
-    }
   }
 }; //
 //
@@ -47590,14 +47807,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 257 */
+/* 258 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdSelect/MdOptgroup.vue
-var MdOptgroup = __webpack_require__(259);
+var MdOptgroup = __webpack_require__(260);
 var MdOptgroup_default = /*#__PURE__*/__webpack_require__.n(MdOptgroup);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-60840a93","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdSelect/MdOptgroup.vue
@@ -47630,7 +47847,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(258)
+  __webpack_require__(259)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -47638,7 +47855,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -47676,13 +47893,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 258 */
+/* 259 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 259 */
+/* 260 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47715,14 +47932,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 260 */
+/* 261 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdFile/MdFile.vue
-var MdFile = __webpack_require__(262);
+var MdFile = __webpack_require__(263);
 var MdFile_default = /*#__PURE__*/__webpack_require__.n(MdFile);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-16fac4a3","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdFile/MdFile.vue
@@ -47812,7 +48029,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(261)
+  __webpack_require__(262)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -47820,7 +48037,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -47858,13 +48075,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 261 */
+/* 262 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 262 */
+/* 263 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47878,7 +48095,7 @@ var _MdUuid = __webpack_require__(6);
 
 var _MdUuid2 = _interopRequireDefault(_MdUuid);
 
-var _MdFileIcon = __webpack_require__(263);
+var _MdFileIcon = __webpack_require__(264);
 
 var _MdFileIcon2 = _interopRequireDefault(_MdFileIcon);
 
@@ -47973,14 +48190,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 263 */
+/* 264 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdFileIcon.vue
-var MdFileIcon = __webpack_require__(264);
+var MdFileIcon = __webpack_require__(265);
 var MdFileIcon_default = /*#__PURE__*/__webpack_require__.n(MdFileIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-3bd0ca30","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdFileIcon.vue
@@ -47988,7 +48205,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -48037,7 +48254,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -48075,7 +48292,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 264 */
+/* 265 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48107,14 +48324,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 265 */
+/* 266 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdField/MdTextarea/MdTextarea.vue
-var MdTextarea = __webpack_require__(266);
+var MdTextarea = __webpack_require__(267);
 var MdTextarea_default = /*#__PURE__*/__webpack_require__.n(MdTextarea);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-445d103a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdField/MdTextarea/MdTextarea.vue
@@ -48153,7 +48370,7 @@ var render = function() {
         _vm.attributes,
         false
       ),
-      _vm.$listeners
+      _vm.listeners
     )
   )
 }
@@ -48175,7 +48392,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -48213,7 +48430,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 266 */
+/* 267 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48222,6 +48439,19 @@ if (false) {(function () {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 var _MdComponent = __webpack_require__(2);
 
@@ -48237,18 +48467,7 @@ var _MdFieldMixin2 = _interopRequireDefault(_MdFieldMixin);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; } //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function calculateContentHeight(el, lineHeight) {
   var origHeight = el.style.height;
@@ -48284,6 +48503,11 @@ exports.default = new _MdComponent2.default({
     mdAutogrow: Boolean
   },
   computed: {
+    listeners: function listeners() {
+      return _extends({}, this.$listeners, {
+        input: this.onInput
+      });
+    },
     textareaStyles: function textareaStyles() {
       return {
         height: this.textareaHeight
@@ -48391,7 +48615,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 267 */
+/* 268 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48405,7 +48629,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdHighlightText = __webpack_require__(268);
+var _MdHighlightText = __webpack_require__(269);
 
 var _MdHighlightText2 = _interopRequireDefault(_MdHighlightText);
 
@@ -48417,17 +48641,17 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 268 */
+/* 269 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdHighlightText_vue__ = __webpack_require__(270);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdHighlightText_vue__ = __webpack_require__(271);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdHighlightText_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdHighlightText_vue__);
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(269)
+  __webpack_require__(270)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -48435,7 +48659,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -48473,13 +48697,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 269 */
+/* 270 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 270 */
+/* 271 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48517,7 +48741,7 @@ function fuzzyHighlight(text, term) {
   var offset = text.toLowerCase().indexOf(term[0].toLowerCase());
 
   if (offset === -1) {
-    return null;
+    return '';
   }
 
   var last = 0;
@@ -48596,7 +48820,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 271 */
+/* 272 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48610,7 +48834,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdImage = __webpack_require__(272);
+var _MdImage = __webpack_require__(273);
 
 var _MdImage2 = _interopRequireDefault(_MdImage);
 
@@ -48622,14 +48846,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 272 */
+/* 273 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdImage/MdImage.vue
-var MdImage = __webpack_require__(274);
+var MdImage = __webpack_require__(275);
 var MdImage_default = /*#__PURE__*/__webpack_require__.n(MdImage);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4511ea59","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdImage/MdImage.vue
@@ -48658,7 +48882,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(273)
+  __webpack_require__(274)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -48666,7 +48890,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -48704,13 +48928,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 273 */
+/* 274 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 274 */
+/* 275 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48734,7 +48958,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 275 */
+/* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48744,18 +48968,18 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-__webpack_require__(276);
+__webpack_require__(277);
 
 exports.default = function (Vue) {};
 
 /***/ }),
-/* 276 */
+/* 277 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 277 */
+/* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48786,13 +49010,13 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 278 */
+/* 279 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 279 */
+/* 280 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48812,23 +49036,23 @@ var _MdRouterLinkProps = __webpack_require__(12);
 
 var _MdRouterLinkProps2 = _interopRequireDefault(_MdRouterLinkProps);
 
-var _MdListItemDefault = __webpack_require__(280);
+var _MdListItemDefault = __webpack_require__(281);
 
 var _MdListItemDefault2 = _interopRequireDefault(_MdListItemDefault);
 
-var _MdListItemButton = __webpack_require__(284);
+var _MdListItemButton = __webpack_require__(285);
 
 var _MdListItemButton2 = _interopRequireDefault(_MdListItemButton);
 
-var _MdListItemLink = __webpack_require__(286);
+var _MdListItemLink = __webpack_require__(287);
 
 var _MdListItemLink2 = _interopRequireDefault(_MdListItemLink);
 
-var _MdListItemRouter = __webpack_require__(288);
+var _MdListItemRouter = __webpack_require__(289);
 
 var _MdListItemRouter2 = _interopRequireDefault(_MdListItemRouter);
 
-var _MdListItemExpand = __webpack_require__(290);
+var _MdListItemExpand = __webpack_require__(291);
 
 var _MdListItemExpand2 = _interopRequireDefault(_MdListItemExpand);
 
@@ -48899,20 +49123,21 @@ exports.default = {
     }), [createElement(listComponent, {
       props: props,
       scopedSlots: resolveScopedSlot(props, children),
-      staticClass: 'md-list-item-container md-button-clean'
+      staticClass: 'md-list-item-container md-button-clean',
+      on: listeners
     }, children.default)]);
   }
 };
 
 /***/ }),
-/* 280 */
+/* 281 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemDefault.vue
-var MdListItemDefault = __webpack_require__(281);
+var MdListItemDefault = __webpack_require__(282);
 var MdListItemDefault_default = /*#__PURE__*/__webpack_require__.n(MdListItemDefault);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-b4eac868","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemDefault.vue
@@ -48952,7 +49177,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -48990,7 +49215,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 281 */
+/* 282 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49028,14 +49253,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 282 */
+/* 283 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemContent.vue
-var MdListItemContent = __webpack_require__(283);
+var MdListItemContent = __webpack_require__(284);
 var MdListItemContent_default = /*#__PURE__*/__webpack_require__.n(MdListItemContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-af37c3f8","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemContent.vue
@@ -49071,7 +49296,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -49109,7 +49334,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 283 */
+/* 284 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49141,14 +49366,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 284 */
+/* 285 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemButton.vue
-var MdListItemButton = __webpack_require__(285);
+var MdListItemButton = __webpack_require__(286);
 var MdListItemButton_default = /*#__PURE__*/__webpack_require__.n(MdListItemButton);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4d27ca12","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemButton.vue
@@ -49191,7 +49416,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -49229,7 +49454,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 285 */
+/* 286 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49258,14 +49483,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 286 */
+/* 287 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemLink.vue
-var MdListItemLink = __webpack_require__(287);
+var MdListItemLink = __webpack_require__(288);
 var MdListItemLink_default = /*#__PURE__*/__webpack_require__.n(MdListItemLink);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-49acb202","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemLink.vue
@@ -49275,12 +49500,7 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "a",
-    _vm._b(
-      { staticClass: "md-list-item-link" },
-      "a",
-      { href: _vm.href, disabled: _vm.disabled, target: _vm.target },
-      false
-    ),
+    _vm._b({ staticClass: "md-list-item-link" }, "a", _vm.$props, false),
     [
       _c(
         "md-list-item-content",
@@ -49310,7 +49530,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -49348,7 +49568,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 287 */
+/* 288 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49368,8 +49588,13 @@ exports.default = {
   name: 'MdListItemLink',
   mixins: [_MdListItemMixin2.default],
   props: {
+    download: String,
     href: String,
-    target: String
+    hreflang: String,
+    ping: String,
+    rel: String,
+    target: String,
+    type: String
   }
 }; //
 //
@@ -49381,14 +49606,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 288 */
+/* 289 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemRouter.vue
-var MdListItemRouter = __webpack_require__(289);
+var MdListItemRouter = __webpack_require__(290);
 var MdListItemRouter_default = /*#__PURE__*/__webpack_require__.n(MdListItemRouter);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-091cb0e4","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemRouter.vue
@@ -49433,7 +49658,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -49471,7 +49696,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 289 */
+/* 290 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49505,14 +49730,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 290 */
+/* 291 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemExpand.vue
-var MdListItemExpand = __webpack_require__(292);
+var MdListItemExpand = __webpack_require__(293);
 var MdListItemExpand_default = /*#__PURE__*/__webpack_require__.n(MdListItemExpand);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-378e4342","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdList/MdListItem/MdListItemExpand.vue
@@ -49570,7 +49795,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(291)
+  __webpack_require__(292)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -49578,7 +49803,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -49616,13 +49841,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 291 */
+/* 292 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 292 */
+/* 293 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49636,7 +49861,7 @@ var _raf = __webpack_require__(9);
 
 var _raf2 = _interopRequireDefault(_raf);
 
-var _MdArrowDownIcon = __webpack_require__(293);
+var _MdArrowDownIcon = __webpack_require__(294);
 
 var _MdArrowDownIcon2 = _interopRequireDefault(_MdArrowDownIcon);
 
@@ -49645,6 +49870,21 @@ var _MdListItemMixin = __webpack_require__(11);
 var _MdListItemMixin2 = _interopRequireDefault(_MdListItemMixin);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; } //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 exports.default = {
   name: 'MdListItemExpand',
@@ -49657,6 +49897,9 @@ exports.default = {
       expandStyles: {},
       showContent: false
     };
+  },
+  props: {
+    mdExpanded: Boolean
   },
   computed: {
     expandClasses: function expandClasses() {
@@ -49676,45 +49919,145 @@ exports.default = {
 
       return size;
     },
-    toggleExpand: function toggleExpand() {
+    fetchStyle: function fetchStyle() {
       var _this = this;
 
-      (0, _raf2.default)(function () {
-        var fullHeight = 0;
+      return new Promise(function (resolve) {
+        (0, _raf2.default)(function () {
+          var fullHeight = 0;
 
-        if (!_this.showContent) {
-          fullHeight = 'auto'; // this.getChildrenSize() + 'px'
-        }
+          if (!_this.showContent) {
+            fullHeight = 'auto'; // this.getChildrenSize() + 'px'
+          }
 
-        _this.expandStyles = { height: fullHeight };
-        _this.showContent = !_this.showContent;
+          _this.expandStyles = { height: fullHeight };
+          resolve();
+        });
       });
+    },
+    toggleExpand: function () {
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.fetchStyle();
+
+              case 2:
+                this.showContent = !this.showContent;
+
+              case 3:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function toggleExpand() {
+        return _ref.apply(this, arguments);
+      }
+
+      return toggleExpand;
+    }(),
+    open: function () {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!this.showContent) {
+                  _context2.next = 2;
+                  break;
+                }
+
+                return _context2.abrupt('return', false);
+
+              case 2:
+                _context2.next = 4;
+                return this.fetchStyle();
+
+              case 4:
+                this.showContent = true;
+
+              case 5:
+              case 'end':
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function open() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return open;
+    }(),
+    close: function () {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (this.showContent) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                return _context3.abrupt('return', false);
+
+              case 2:
+                _context3.next = 4;
+                return this.fetchStyle();
+
+              case 4:
+                this.showContent = false;
+
+              case 5:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function close() {
+        return _ref3.apply(this, arguments);
+      }
+
+      return close;
+    }()
+  },
+  watch: {
+    mdExpanded: function mdExpanded() {
+      if (this.mdExpanded) {
+        this.open();
+      } else {
+        this.close();
+      }
+    },
+    showContent: function showContent() {
+      this.$emit('update:mdExpanded', this.showContent);
+    }
+  },
+  mounted: function mounted() {
+    if (this.mdExpanded) {
+      this.open();
     }
   }
-}; //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+};
 
 /***/ }),
-/* 293 */
+/* 294 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdArrowDownIcon.vue
-var MdArrowDownIcon = __webpack_require__(294);
+var MdArrowDownIcon = __webpack_require__(295);
 var MdArrowDownIcon_default = /*#__PURE__*/__webpack_require__.n(MdArrowDownIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-2443de21","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdArrowDownIcon.vue
@@ -49722,7 +50065,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -49768,7 +50111,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -49806,7 +50149,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 294 */
+/* 295 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49838,7 +50181,7 @@ exports.default = {
 //
 
 /***/ }),
-/* 295 */
+/* 296 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -49860,7 +50203,7 @@ var _MdMenuContent = __webpack_require__(45);
 
 var _MdMenuContent2 = _interopRequireDefault(_MdMenuContent);
 
-var _MdMenuItem = __webpack_require__(296);
+var _MdMenuItem = __webpack_require__(297);
 
 var _MdMenuItem2 = _interopRequireDefault(_MdMenuItem);
 
@@ -49874,14 +50217,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 296 */
+/* 297 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdMenu/MdMenuItem.vue
-var MdMenuItem = __webpack_require__(297);
+var MdMenuItem = __webpack_require__(298);
 var MdMenuItem_default = /*#__PURE__*/__webpack_require__.n(MdMenuItem);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-26762702","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdMenu/MdMenuItem.vue
@@ -49926,7 +50269,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -49964,7 +50307,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 297 */
+/* 298 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50042,7 +50385,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 298 */
+/* 299 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50056,11 +50399,11 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdProgressBar = __webpack_require__(299);
+var _MdProgressBar = __webpack_require__(300);
 
 var _MdProgressBar2 = _interopRequireDefault(_MdProgressBar);
 
-var _MdProgressSpinner = __webpack_require__(302);
+var _MdProgressSpinner = __webpack_require__(303);
 
 var _MdProgressSpinner2 = _interopRequireDefault(_MdProgressSpinner);
 
@@ -50073,14 +50416,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 299 */
+/* 300 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdProgress/MdProgressBar/MdProgressBar.vue
-var MdProgressBar = __webpack_require__(301);
+var MdProgressBar = __webpack_require__(302);
 var MdProgressBar_default = /*#__PURE__*/__webpack_require__.n(MdProgressBar);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-ec82e758","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdProgress/MdProgressBar/MdProgressBar.vue
@@ -50128,7 +50471,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(300)
+  __webpack_require__(301)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -50136,7 +50479,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -50174,13 +50517,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 300 */
+/* 301 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 301 */
+/* 302 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50259,14 +50602,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 302 */
+/* 303 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdProgress/MdProgressSpinner/MdProgressSpinner.vue
-var MdProgressSpinner = __webpack_require__(304);
+var MdProgressSpinner = __webpack_require__(305);
 var MdProgressSpinner_default = /*#__PURE__*/__webpack_require__.n(MdProgressSpinner);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-0abf13e0","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdProgress/MdProgressSpinner/MdProgressSpinner.vue
@@ -50323,7 +50666,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(303)
+  __webpack_require__(304)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -50331,7 +50674,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -50369,13 +50712,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 303 */
+/* 304 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 304 */
+/* 305 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50409,7 +50752,7 @@ var _MdPropValidator = __webpack_require__(4);
 
 var _MdPropValidator2 = _interopRequireDefault(_MdPropValidator);
 
-var _MdProgressSpinnerAnimation = __webpack_require__(305);
+var _MdProgressSpinnerAnimation = __webpack_require__(306);
 
 var _MdProgressSpinnerAnimation2 = _interopRequireDefault(_MdProgressSpinnerAnimation);
 
@@ -50450,7 +50793,10 @@ exports.default = new _MdComponent2.default({
       return this.mdMode === 'indeterminate';
     },
     isIE: function isIE() {
-      return navigator.userAgent.toLowerCase().includes('trident');
+      if (!this.$isServer) {
+        return navigator.userAgent.toLowerCase().includes('trident');
+      }
+      return false;
     },
     progressClasses: function progressClasses() {
       var _ref;
@@ -50540,7 +50886,7 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 305 */
+/* 306 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50552,7 +50898,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = "\n  @keyframes md-progress-spinner-stroke-rotate-DIAMETER {\n    0% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotate(0);\n    }\n\n    12.5% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotate(0);\n    }\n\n    12.51% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotateX(180deg) rotate(72.5deg);\n    }\n\n    25% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotateX(180deg) rotate(72.5deg);\n    }\n\n    25.1% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotate(270deg);\n    }\n\n    37.5% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotate(270deg);\n    }\n\n    37.51% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotateX(180deg) rotate(161.5deg);\n    }\n\n    50% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotateX(180deg) rotate(161.5deg);\n    }\n\n    50.01% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotate(180deg);\n    }\n\n    62.5% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotate(180deg);\n    }\n\n    62.51% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotateX(180deg) rotate(251.5deg);\n    }\n\n    75% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotateX(180deg) rotate(251.5deg);\n    }\n\n    75.01% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotate(90deg);\n    }\n\n    87.5% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotate(90deg);\n    }\n\n    87.51% {\n      stroke-dashoffset: END_VALUE;\n      transform: rotateX(180deg) rotate(341.5deg);\n    }\n\n    100% {\n      stroke-dashoffset: START_VALUE;\n      transform: rotateX(180deg) rotate(341.5deg);\n    }\n  }\n";
 
 /***/ }),
-/* 306 */
+/* 307 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50566,7 +50912,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdRadio = __webpack_require__(307);
+var _MdRadio = __webpack_require__(308);
 
 var _MdRadio2 = _interopRequireDefault(_MdRadio);
 
@@ -50578,14 +50924,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 307 */
+/* 308 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdRadio/MdRadio.vue
-var MdRadio = __webpack_require__(309);
+var MdRadio = __webpack_require__(310);
 var MdRadio_default = /*#__PURE__*/__webpack_require__.n(MdRadio);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-b5b900ce","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdRadio/MdRadio.vue
@@ -50679,7 +51025,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(308)
+  __webpack_require__(309)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -50687,7 +51033,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -50725,13 +51071,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 308 */
+/* 309 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 309 */
+/* 310 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50821,7 +51167,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 310 */
+/* 311 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50847,7 +51193,7 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 311 */
+/* 312 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50861,7 +51207,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdSnackbar = __webpack_require__(312);
+var _MdSnackbar = __webpack_require__(313);
 
 var _MdSnackbar2 = _interopRequireDefault(_MdSnackbar);
 
@@ -50873,14 +51219,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 312 */
+/* 313 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSnackbar/MdSnackbar.vue
-var MdSnackbar = __webpack_require__(314);
+var MdSnackbar = __webpack_require__(315);
 var MdSnackbar_default = /*#__PURE__*/__webpack_require__.n(MdSnackbar);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7063bc8f","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSnackbar/MdSnackbar.vue
@@ -50946,7 +51292,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(313)
+  __webpack_require__(314)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -50954,7 +51300,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -50992,13 +51338,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 313 */
+/* 314 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 314 */
+/* 315 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51037,11 +51383,11 @@ var _MdPortal = __webpack_require__(16);
 
 var _MdPortal2 = _interopRequireDefault(_MdPortal);
 
-var _MdSnackbarContent = __webpack_require__(315);
+var _MdSnackbarContent = __webpack_require__(316);
 
 var _MdSnackbarContent2 = _interopRequireDefault(_MdSnackbarContent);
 
-var _MdSnackbarQueue = __webpack_require__(317);
+var _MdSnackbarQueue = __webpack_require__(318);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -51116,14 +51462,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 315 */
+/* 316 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSnackbar/MdSnackbarContent.vue
-var MdSnackbarContent = __webpack_require__(316);
+var MdSnackbarContent = __webpack_require__(317);
 var MdSnackbarContent_default = /*#__PURE__*/__webpack_require__.n(MdSnackbarContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-ffe066cc","hasScoped":false,"buble":{"transforms":{"stripWithFunctional":true}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSnackbar/MdSnackbarContent.vue
@@ -51153,7 +51499,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = true
+var __vue_template_functional__ = true
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -51191,7 +51537,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 316 */
+/* 317 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51219,7 +51565,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 317 */
+/* 318 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51315,7 +51661,7 @@ var createSnackbar = exports.createSnackbar = function () {
 }();
 
 /***/ }),
-/* 318 */
+/* 319 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51329,15 +51675,15 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdSpeedDial = __webpack_require__(319);
+var _MdSpeedDial = __webpack_require__(320);
 
 var _MdSpeedDial2 = _interopRequireDefault(_MdSpeedDial);
 
-var _MdSpeedDialTarget = __webpack_require__(322);
+var _MdSpeedDialTarget = __webpack_require__(323);
 
 var _MdSpeedDialTarget2 = _interopRequireDefault(_MdSpeedDialTarget);
 
-var _MdSpeedDialContent = __webpack_require__(325);
+var _MdSpeedDialContent = __webpack_require__(326);
 
 var _MdSpeedDialContent2 = _interopRequireDefault(_MdSpeedDialContent);
 
@@ -51351,14 +51697,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 319 */
+/* 320 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSpeedDial/MdSpeedDial.vue
-var MdSpeedDial = __webpack_require__(321);
+var MdSpeedDial = __webpack_require__(322);
 var MdSpeedDial_default = /*#__PURE__*/__webpack_require__.n(MdSpeedDial);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-470f76d1","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSpeedDial/MdSpeedDial.vue
@@ -51390,7 +51736,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(320)
+  __webpack_require__(321)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -51398,7 +51744,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -51436,13 +51782,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 320 */
+/* 321 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 321 */
+/* 322 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51515,14 +51861,14 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 322 */
+/* 323 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSpeedDial/MdSpeedDialTarget.vue
-var MdSpeedDialTarget = __webpack_require__(324);
+var MdSpeedDialTarget = __webpack_require__(325);
 var MdSpeedDialTarget_default = /*#__PURE__*/__webpack_require__.n(MdSpeedDialTarget);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-654a757c","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSpeedDial/MdSpeedDialTarget.vue
@@ -51562,7 +51908,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(323)
+  __webpack_require__(324)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -51570,7 +51916,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -51608,13 +51954,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 323 */
+/* 324 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 324 */
+/* 325 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51651,14 +51997,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 325 */
+/* 326 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSpeedDial/MdSpeedDialContent.vue
-var MdSpeedDialContent = __webpack_require__(327);
+var MdSpeedDialContent = __webpack_require__(328);
 var MdSpeedDialContent_default = /*#__PURE__*/__webpack_require__.n(MdSpeedDialContent);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-45ac6418","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSpeedDial/MdSpeedDialContent.vue
@@ -51687,7 +52033,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(326)
+  __webpack_require__(327)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -51695,7 +52041,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -51733,13 +52079,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 326 */
+/* 327 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 327 */
+/* 328 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51819,7 +52165,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 328 */
+/* 329 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51833,11 +52179,11 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdSteppers = __webpack_require__(329);
+var _MdSteppers = __webpack_require__(330);
 
 var _MdSteppers2 = _interopRequireDefault(_MdSteppers);
 
-var _MdStep = __webpack_require__(339);
+var _MdStep = __webpack_require__(340);
 
 var _MdStep2 = _interopRequireDefault(_MdStep);
 
@@ -51850,14 +52196,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 329 */
+/* 330 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSteppers/MdSteppers.vue
-var MdSteppers = __webpack_require__(331);
+var MdSteppers = __webpack_require__(332);
 var MdSteppers_default = /*#__PURE__*/__webpack_require__.n(MdSteppers);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-95acb722","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSteppers/MdSteppers.vue
@@ -51917,7 +52263,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(330)
+  __webpack_require__(331)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -51925,7 +52271,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -51963,13 +52309,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 330 */
+/* 331 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 331 */
+/* 332 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52209,6 +52555,8 @@ exports.default = new _MdComponent2.default({
       if ('ResizeObserver' in window) {
         this.resizeObserver = new window.ResizeObserver(this.calculateStepperPos);
         this.resizeObserver.observe(this.$el);
+      } else {
+        window.addEventListener('resize', this.calculateStepperPos);
       }
 
       if (steppersContent) {
@@ -52294,11 +52642,16 @@ exports.default = new _MdComponent2.default({
     }
 
     return mounted;
-  }()
+  }(),
+  beforeDestroy: function beforeDestroy() {
+    if (!('ResizeObserver' in window)) {
+      window.removeEventListener('resize', this.calculateStepperPos);
+    }
+  }
 });
 
 /***/ }),
-/* 332 */
+/* 333 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52308,15 +52661,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _MdWarningIcon = __webpack_require__(333);
+var _MdWarningIcon = __webpack_require__(334);
 
 var _MdWarningIcon2 = _interopRequireDefault(_MdWarningIcon);
 
-var _MdCheckIcon = __webpack_require__(335);
+var _MdCheckIcon = __webpack_require__(336);
 
 var _MdCheckIcon2 = _interopRequireDefault(_MdCheckIcon);
 
-var _MdEditIcon = __webpack_require__(337);
+var _MdEditIcon = __webpack_require__(338);
 
 var _MdEditIcon2 = _interopRequireDefault(_MdEditIcon);
 
@@ -52380,14 +52733,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 333 */
+/* 334 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdWarningIcon.vue
-var MdWarningIcon = __webpack_require__(334);
+var MdWarningIcon = __webpack_require__(335);
 var MdWarningIcon_default = /*#__PURE__*/__webpack_require__.n(MdWarningIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-8993dc9c","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdWarningIcon.vue
@@ -52395,7 +52748,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -52441,7 +52794,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -52479,7 +52832,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 334 */
+/* 335 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52511,14 +52864,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 335 */
+/* 336 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdCheckIcon.vue
-var MdCheckIcon = __webpack_require__(336);
+var MdCheckIcon = __webpack_require__(337);
 var MdCheckIcon_default = /*#__PURE__*/__webpack_require__.n(MdCheckIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4154b05e","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdCheckIcon.vue
@@ -52526,7 +52879,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -52572,7 +52925,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -52610,7 +52963,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 336 */
+/* 337 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52627,7 +52980,7 @@ var _MdIcon2 = _interopRequireDefault(_MdIcon);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = {
-  name: 'MdDoneIcon',
+  name: 'MdCheckIcon',
   components: {
     MdIcon: _MdIcon2.default
   }
@@ -52642,14 +52995,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 337 */
+/* 338 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdEditIcon.vue
-var MdEditIcon = __webpack_require__(338);
+var MdEditIcon = __webpack_require__(339);
 var MdEditIcon_default = /*#__PURE__*/__webpack_require__.n(MdEditIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-75d6b514","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdEditIcon.vue
@@ -52657,7 +53010,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -52706,7 +53059,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -52744,7 +53097,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 338 */
+/* 339 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52776,14 +53129,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 339 */
+/* 340 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSteppers/MdStep.vue
-var MdStep = __webpack_require__(341);
+var MdStep = __webpack_require__(342);
 var MdStep_default = /*#__PURE__*/__webpack_require__.n(MdStep);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-8624960e","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSteppers/MdStep.vue
@@ -52826,7 +53179,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(340)
+  __webpack_require__(341)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -52834,7 +53187,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -52872,13 +53225,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 340 */
+/* 341 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 341 */
+/* 342 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53027,7 +53380,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 342 */
+/* 343 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53041,7 +53394,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdSubheader = __webpack_require__(343);
+var _MdSubheader = __webpack_require__(344);
 
 var _MdSubheader2 = _interopRequireDefault(_MdSubheader);
 
@@ -53053,14 +53406,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 343 */
+/* 344 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSubheader/MdSubheader.vue
-var MdSubheader = __webpack_require__(345);
+var MdSubheader = __webpack_require__(346);
 var MdSubheader_default = /*#__PURE__*/__webpack_require__.n(MdSubheader);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7ff30e86","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSubheader/MdSubheader.vue
@@ -53096,7 +53449,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(344)
+  __webpack_require__(345)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -53104,7 +53457,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -53142,13 +53495,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 344 */
+/* 345 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 345 */
+/* 346 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53183,7 +53536,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 346 */
+/* 347 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53197,7 +53550,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdSwitch = __webpack_require__(347);
+var _MdSwitch = __webpack_require__(348);
 
 var _MdSwitch2 = _interopRequireDefault(_MdSwitch);
 
@@ -53209,14 +53562,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 347 */
+/* 348 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdSwitch/MdSwitch.vue
-var MdSwitch = __webpack_require__(349);
+var MdSwitch = __webpack_require__(350);
 var MdSwitch_default = /*#__PURE__*/__webpack_require__.n(MdSwitch);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-5ff953a2","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdSwitch/MdSwitch.vue
@@ -53316,7 +53669,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(348)
+  __webpack_require__(349)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -53324,7 +53677,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -53362,13 +53715,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 348 */
+/* 349 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 349 */
+/* 350 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53421,7 +53774,7 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 350 */
+/* 351 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53435,15 +53788,15 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdTableContainer = __webpack_require__(351);
+var _MdTableContainer = __webpack_require__(352);
 
 var _MdTableContainer2 = _interopRequireDefault(_MdTableContainer);
 
-var _MdTableToolbar = __webpack_require__(374);
+var _MdTableToolbar = __webpack_require__(375);
 
 var _MdTableToolbar2 = _interopRequireDefault(_MdTableToolbar);
 
-var _MdTableEmptyState = __webpack_require__(379);
+var _MdTableEmptyState = __webpack_require__(380);
 
 var _MdTableEmptyState2 = _interopRequireDefault(_MdTableEmptyState);
 
@@ -53455,11 +53808,11 @@ var _MdTableHead = __webpack_require__(27);
 
 var _MdTableHead2 = _interopRequireDefault(_MdTableHead);
 
-var _MdTableCell = __webpack_require__(382);
+var _MdTableCell = __webpack_require__(383);
 
 var _MdTableCell2 = _interopRequireDefault(_MdTableCell);
 
-var _MdTablePagination = __webpack_require__(385);
+var _MdTablePagination = __webpack_require__(386);
 
 var _MdTablePagination2 = _interopRequireDefault(_MdTablePagination);
 
@@ -53477,7 +53830,7 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 351 */
+/* 352 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53489,7 +53842,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _MdTable = __webpack_require__(352);
+var _MdTable = __webpack_require__(353);
 
 var _MdTable2 = _interopRequireDefault(_MdTable);
 
@@ -53549,14 +53902,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 352 */
+/* 353 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTable.vue
-var MdTable = __webpack_require__(354);
+var MdTable = __webpack_require__(355);
 var MdTable_default = /*#__PURE__*/__webpack_require__.n(MdTable);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-aaeced82","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTable.vue
@@ -53628,7 +53981,8 @@ var render = function() {
                             key: _vm.getRowId(item[_vm.mdModelId]),
                             attrs: {
                               "md-id": _vm.getRowId(item[_vm.mdModelId]),
-                              "md-index": index
+                              "md-index": index,
+                              "md-item": item
                             }
                           },
                           [_vm._t("md-table-row", null, { item: item })],
@@ -53676,7 +54030,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(353)
+  __webpack_require__(354)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -53684,7 +54038,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -53722,13 +54076,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 353 */
+/* 354 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 354 */
+/* 355 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -53788,12 +54142,13 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 //
 //
 //
+//
 
 var _raf = __webpack_require__(9);
 
 var _raf2 = _interopRequireDefault(_raf);
 
-var _MdTagSwitcher = __webpack_require__(355);
+var _MdTagSwitcher = __webpack_require__(356);
 
 var _MdTagSwitcher2 = _interopRequireDefault(_MdTagSwitcher);
 
@@ -53805,11 +54160,11 @@ var _MdPropValidator = __webpack_require__(4);
 
 var _MdPropValidator2 = _interopRequireDefault(_MdPropValidator);
 
-var _MdTableThead = __webpack_require__(357);
+var _MdTableThead = __webpack_require__(358);
 
 var _MdTableThead2 = _interopRequireDefault(_MdTableThead);
 
-var _MdTableAlternateHeader = __webpack_require__(365);
+var _MdTableAlternateHeader = __webpack_require__(366);
 
 var _MdTableAlternateHeader2 = _interopRequireDefault(_MdTableAlternateHeader);
 
@@ -53817,7 +54172,7 @@ var _MdTableRow = __webpack_require__(51);
 
 var _MdTableRow2 = _interopRequireDefault(_MdTableRow);
 
-var _MdTableRowGhost = __webpack_require__(372);
+var _MdTableRowGhost = __webpack_require__(373);
 
 var _MdTableRowGhost2 = _interopRequireDefault(_MdTableRowGhost);
 
@@ -53826,6 +54181,39 @@ var _MdTableCellSelection = __webpack_require__(52);
 var _MdTableCellSelection2 = _interopRequireDefault(_MdTableCellSelection);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var getObjectAttribute = function getObjectAttribute(object, key) {
+  var value = object;
+
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = key.split('.')[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var attribute = _step.value;
+
+      value = value[attribute];
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return value;
+};
 
 exports.default = {
   name: 'MdTable',
@@ -53861,14 +54249,25 @@ exports.default = {
 
         return value.sort(function (a, b) {
           var sortBy = _this.MdTable.sort;
+          var aAttr = getObjectAttribute(a, sortBy);
+          var bAttr = getObjectAttribute(b, sortBy);
+          var isAsc = _this.MdTable.sortOrder === 'asc';
+          var isNumber = typeof aAttr === 'number';
 
-          if (_this.MdTable.sortOrder === 'desc') {
-            return a[sortBy].localeCompare(b[sortBy]);
+          if (isNumber) {
+            return isAsc ? bAttr - aAttr : aAttr - bAttr;
           }
 
-          return b[sortBy].localeCompare(a[sortBy]);
+          if (isAsc) {
+            return bAttr.localeCompare(aAttr);
+          }
+
+          return aAttr.localeCompare(bAttr);
         });
       }
+    },
+    mdSelectedValue: {
+      type: [Array, Object]
     }
   },
   data: function data() {
@@ -53880,8 +54279,8 @@ exports.default = {
         sort: null,
         sortOrder: null,
         singleSelection: null,
-        selectedItems: {},
-        selectable: {},
+        selectedItems: [],
+        selectable: [],
         fixedHeader: null,
         contentPadding: null,
         contentEl: null,
@@ -53892,7 +54291,8 @@ exports.default = {
         sortTable: this.sortTable,
         manageItemSelection: this.manageItemSelection,
         getModel: this.getModel,
-        getModelItem: this.getModelItem
+        getModelItem: this.getModelItem,
+        selectingMode: null
       }
     };
   },
@@ -53909,7 +54309,7 @@ exports.default = {
       return Object.keys(this.MdTable.items).length;
     },
     selectedCount: function selectedCount() {
-      return Object.keys(this.MdTable.selectedItems).length;
+      return this.MdTable.selectedItems.length;
     },
     headerStyles: function headerStyles() {
       if (this.mdFixedHeader) {
@@ -53926,7 +54326,7 @@ exports.default = {
     },
     contentStyles: function contentStyles() {
       if (this.mdFixedHeader) {
-        return 'height: ' + this.mdHeight + 'px';
+        return 'height: ' + this.mdHeight + 'px;max-height: ' + this.mdHeight + 'px';
       }
     },
     contentClasses: function contentClasses() {
@@ -53965,6 +54365,15 @@ exports.default = {
       handler: function handler() {
         this.MdTable.hasValue = this.hasValue;
       }
+    },
+    'MdTable.selectedItems': function MdTableSelectedItems(val) {
+      this.select(val);
+    },
+    'MdTable.singleSelection': function MdTableSingleSelection(val) {
+      this.select(val);
+    },
+    mdSelectedValue: function mdSelectedValue() {
+      this.syncSelectedValue();
     }
   },
   methods: {
@@ -54006,24 +54415,61 @@ exports.default = {
     getModelItem: function getModelItem(index) {
       return this.value[index];
     },
-    manageItemSelection: function manageItemSelection(index) {
-      if (this.MdTable.selectedItems[index]) {
-        this.$delete(this.MdTable.selectedItems, index);
+    manageItemSelection: function manageItemSelection(item) {
+      if (this.MdTable.selectedItems.includes(item)) {
+        this.MdTable.selectedItems = this.MdTable.selectedItems.filter(function (target) {
+          return target !== item;
+        });
       } else {
-        this.$set(this.MdTable.selectedItems, index, this.value[index]);
+        this.MdTable.selectedItems.push(item);
       }
-
-      this.sendSelectionEvent();
-    },
-    sendSelectionEvent: function sendSelectionEvent() {
-      this.$emit('md-selected', Object.values(this.MdTable.selectedItems));
     },
     sortTable: function sortTable() {
       if (Array.isArray(this.value)) {
         this.$emit('input', this.mdSortFn(this.value));
       }
+    },
+    select: function select(val) {
+      this.$emit('update:mdSelectedValue', val);
+      this.$emit('md-selected', val);
+    },
+    syncSelectedValue: function syncSelectedValue() {
+      switch (this.MdTable.selectingMode) {
+        case 'single':
+          this.MdTable.singleSelection = this.mdSelectedValue;
+          break;
+        case 'multiple':
+          this.MdTable.selectedItems = this.mdSelectedValue || [];
+          break;
+      }
     }
   },
+  created: function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return this.$nextTick();
+
+            case 2:
+              this.syncSelectedValue();
+
+            case 3:
+            case 'end':
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+
+    function created() {
+      return _ref.apply(this, arguments);
+    }
+
+    return created;
+  }(),
   mounted: function mounted() {
     this.setContentEl();
 
@@ -54034,12 +54480,12 @@ exports.default = {
 };
 
 /***/ }),
-/* 355 */
+/* 356 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTagSwitcher_vue__ = __webpack_require__(356);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTagSwitcher_vue__ = __webpack_require__(357);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTagSwitcher_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTagSwitcher_vue__);
 var disposed = false
 var normalizeComponent = __webpack_require__(0)
@@ -54048,7 +54494,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -54086,7 +54532,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 356 */
+/* 357 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54119,14 +54565,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 357 */
+/* 358 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableThead.vue
-var MdTableThead = __webpack_require__(358);
+var MdTableThead = __webpack_require__(359);
 var MdTableThead_default = /*#__PURE__*/__webpack_require__.n(MdTableThead);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-8a8392f6","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableThead.vue
@@ -54169,7 +54615,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -54207,7 +54653,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 358 */
+/* 359 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54221,7 +54667,7 @@ var _MdTableHead = __webpack_require__(27);
 
 var _MdTableHead2 = _interopRequireDefault(_MdTableHead);
 
-var _MdTableHeadSelection = __webpack_require__(363);
+var _MdTableHeadSelection = __webpack_require__(364);
 
 var _MdTableHeadSelection2 = _interopRequireDefault(_MdTableHeadSelection);
 
@@ -54247,13 +54693,13 @@ exports.default = {
 };
 
 /***/ }),
-/* 359 */
+/* 360 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 360 */
+/* 361 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54263,7 +54709,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _MdUpwardIcon = __webpack_require__(361);
+var _MdUpwardIcon = __webpack_require__(362);
 
 var _MdUpwardIcon2 = _interopRequireDefault(_MdUpwardIcon);
 
@@ -54428,14 +54874,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 361 */
+/* 362 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/core/icons/MdUpwardIcon.vue
-var MdUpwardIcon = __webpack_require__(362);
+var MdUpwardIcon = __webpack_require__(363);
 var MdUpwardIcon_default = /*#__PURE__*/__webpack_require__.n(MdUpwardIcon);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-235f197a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/core/icons/MdUpwardIcon.vue
@@ -54443,7 +54889,7 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _vm._m(0, false, true)
 }
 var staticRenderFns = [
   function() {
@@ -54491,7 +54937,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -54529,7 +54975,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 362 */
+/* 363 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54546,7 +54992,7 @@ var _MdIcon2 = _interopRequireDefault(_MdIcon);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = {
-  name: 'MdArrowDownIcon',
+  name: 'MdUpwardIcon',
   components: {
     MdIcon: _MdIcon2.default
   }
@@ -54561,14 +55007,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 363 */
+/* 364 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableHeadSelection.vue
-var MdTableHeadSelection = __webpack_require__(364);
+var MdTableHeadSelection = __webpack_require__(365);
 var MdTableHeadSelection_default = /*#__PURE__*/__webpack_require__.n(MdTableHeadSelection);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-7fa31cbd","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableHeadSelection.vue
@@ -54583,15 +55029,8 @@ var render = function() {
           { staticClass: "md-table-cell-container" },
           [
             _c("md-checkbox", {
-              attrs: { disabled: _vm.isDisabled },
-              on: { change: _vm.onChange },
-              model: {
-                value: _vm.allSelected,
-                callback: function($$v) {
-                  _vm.allSelected = $$v
-                },
-                expression: "allSelected"
-              }
+              attrs: { model: _vm.allSelected, disabled: _vm.isDisabled },
+              on: { change: _vm.onChange }
             })
           ],
           1
@@ -54617,7 +55056,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -54655,7 +55094,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 364 */
+/* 365 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54677,11 +55116,6 @@ exports.default = {
     MdTableHead: _MdTableHead2.default
   },
   inject: ['MdTable'],
-  data: function data() {
-    return {
-      allSelected: false
-    };
-  },
   computed: {
     selectableCount: function selectableCount() {
       return Object.keys(this.selectable).length;
@@ -54694,32 +55128,32 @@ exports.default = {
     },
     selectedItems: function selectedItems() {
       return this.MdTable.selectedItems;
-    }
-  },
-  watch: {
-    selectedItems: {
-      immediate: true,
-      deep: true,
-      handler: function handler(items) {
-        var _this = this;
+    },
+    allSelected: function allSelected() {
+      var _this = this;
 
-        window.setTimeout(function () {
-          var countSelected = Object.keys(items).length;
-
-          if (_this.selectableCount > 0 && countSelected > 0) {
-            _this.allSelected = countSelected === _this.selectableCount;
-          }
-        }, 10);
+      if (this.selectableCount === 0) {
+        return false;
       }
+
+      return this.selectable.every(function (item) {
+        return _this.selectedItems.includes(item);
+      });
     }
   },
   methods: {
-    onChange: function onChange() {
+    onChange: function onChange(val) {
       var _this2 = this;
 
-      Object.values(this.MdTable.selectable).forEach(function (callback) {
-        callback(_this2.allSelected);
-      });
+      if (val) {
+        this.MdTable.selectedItems = this.selectedItems.concat(this.selectable.filter(function (item) {
+          return !_this2.selectedItems.includes(item);
+        }));
+      } else {
+        this.MdTable.selectedItems = this.selectedItems.filter(function (item) {
+          return !_this2.selectable.includes(item);
+        });
+      }
     }
   }
 }; //
@@ -54732,14 +55166,14 @@ exports.default = {
 //
 
 /***/ }),
-/* 365 */
+/* 366 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableAlternateHeader.vue
-var MdTableAlternateHeader = __webpack_require__(367);
+var MdTableAlternateHeader = __webpack_require__(368);
 var MdTableAlternateHeader_default = /*#__PURE__*/__webpack_require__.n(MdTableAlternateHeader);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4241c118","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableAlternateHeader.vue
@@ -54770,7 +55204,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(366)
+  __webpack_require__(367)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -54778,7 +55212,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -54816,13 +55250,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 366 */
+/* 367 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 367 */
+/* 368 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54845,13 +55279,13 @@ exports.default = {
 };
 
 /***/ }),
-/* 368 */
+/* 369 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 369 */
+/* 370 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -54896,7 +55330,8 @@ exports.default = {
       type: [String]
     }, (0, _MdPropValidator2.default)('md-selectable', ['multiple', 'single'])),
     mdDisabled: Boolean,
-    mdAutoSelect: Boolean
+    mdAutoSelect: Boolean,
+    mdItem: Object
   },
   inject: ['MdTable'],
   data: function data() {
@@ -54910,7 +55345,7 @@ exports.default = {
       return Object.keys(this.MdTable.selectable).length;
     },
     isSingleSelected: function isSingleSelected() {
-      return this.MdTable.singleSelection === this.mdId;
+      return this.MdTable.singleSelection === this.mdItem;
     },
     hasMultipleSelection: function hasMultipleSelection() {
       return this.MdTable.hasValue && this.mdSelectable === 'multiple';
@@ -54926,6 +55361,9 @@ exports.default = {
           'md-selected-single': this.isSingleSelected
         };
       }
+    },
+    isInSelectedItems: function isInSelectedItems() {
+      return this.MdTable.selectedItems.includes(this.mdItem);
     }
   },
   watch: {
@@ -54936,12 +55374,20 @@ exports.default = {
         this.addSelectableItem();
       }
     },
-    mdId: function mdId(newId, oldId) {
-      this.removeSelectableItem(oldId);
-      this.addSelectableItem(newId);
+    isSelected: function isSelected(val) {
+      var noChange = val && this.isInSelectedItems || !val && !this.isInSelectedItems;
+
+      if (noChange) {
+        return false;
+      }
+
+      this.MdTable.manageItemSelection(this.mdItem);
     },
-    isSelected: function isSelected() {
-      this.MdTable.manageItemSelection(this.mdIndex);
+    isInSelectedItems: function isInSelectedItems(val) {
+      this.isSelected = val;
+    },
+    mdSelectable: function mdSelectable() {
+      this.MdTable.selectingMode = this.mdSelectable;
     }
   },
   methods: {
@@ -54958,12 +55404,10 @@ exports.default = {
       this.isSelected = !this.isSelected;
     },
     selectRowIfSingle: function selectRowIfSingle() {
-      if (this.MdTable.singleSelection === this.mdId) {
+      if (this.MdTable.singleSelection === this.mdItem) {
         this.MdTable.singleSelection = null;
-        this.$emit('md-selected', null);
       } else {
-        this.MdTable.singleSelection = this.mdId;
-        this.$emit('md-selected', this.MdTable.getModelItem(this.mdIndex));
+        this.MdTable.singleSelection = this.mdItem;
       }
     },
     selectRowIfMultiple: function selectRowIfMultiple() {
@@ -54971,23 +55415,32 @@ exports.default = {
         this.toggleSelection();
       }
     },
-    addSelectableItem: function addSelectableItem(id) {
+    addSelectableItem: function addSelectableItem() {
+      if (!this.hasMultipleSelection || this.mdDisabled) {
+        return;
+      }
+
+      if (this.MdTable.selectable.includes(this.mdItem)) {
+        return;
+      }
+
+      this.MdTable.selectable.push(this.mdItem);
+    },
+    removeSelectableItem: function removeSelectableItem() {
       var _this = this;
 
-      if (this.hasMultipleSelection && !this.mdDisabled) {
-        this.$set(this.MdTable.selectable, id || this.mdId, function (isSelected) {
-          _this.isSelected = isSelected;
-        });
+      if (!this.hasMultipleSelection) {
+        return;
       }
-    },
-    removeSelectableItem: function removeSelectableItem(id) {
-      if (this.hasMultipleSelection) {
-        this.$delete(this.MdTable.selectable, id || this.mdId);
-      }
+
+      this.MdTable.selectable = this.MdTable.selectable.filter(function (item) {
+        return item !== _this.mdItem;
+      });
     }
   },
   created: function created() {
     this.addSelectableItem();
+    this.MdTable.selectingMode = this.mdSelectable;
   },
   beforeDestroy: function beforeDestroy() {
     this.removeSelectableItem();
@@ -54995,13 +55448,13 @@ exports.default = {
 };
 
 /***/ }),
-/* 370 */
+/* 371 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 371 */
+/* 372 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55046,12 +55499,12 @@ exports.default = {
 };
 
 /***/ }),
-/* 372 */
+/* 373 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTableRowGhost_vue__ = __webpack_require__(373);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTableRowGhost_vue__ = __webpack_require__(374);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTableRowGhost_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTableRowGhost_vue__);
 var disposed = false
 var normalizeComponent = __webpack_require__(0)
@@ -55060,7 +55513,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -55098,7 +55551,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 373 */
+/* 374 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55112,25 +55565,27 @@ exports.default = {
   abstract: true,
   props: {
     mdIndex: [String, Number],
-    mdId: [String, Number]
+    mdId: [String, Number],
+    mdItem: Object
   },
   render: function render() {
     this.$slots.default[0].componentOptions.propsData.mdIndex = this.mdIndex;
     this.$slots.default[0].componentOptions.propsData.mdId = this.mdId;
+    this.$slots.default[0].componentOptions.propsData.mdItem = this.mdItem;
 
     return this.$slots.default[0];
   }
 };
 
 /***/ }),
-/* 374 */
+/* 375 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableToolbar.vue
-var MdTableToolbar = __webpack_require__(376);
+var MdTableToolbar = __webpack_require__(377);
 var MdTableToolbar_default = /*#__PURE__*/__webpack_require__.n(MdTableToolbar);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-3f6f4028","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableToolbar.vue
@@ -55162,7 +55617,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(375)
+  __webpack_require__(376)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -55170,7 +55625,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -55208,13 +55663,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 375 */
+/* 376 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 376 */
+/* 377 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55244,13 +55699,13 @@ exports.default = {
 //
 
 /***/ }),
-/* 377 */
+/* 378 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 378 */
+/* 379 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55282,14 +55737,14 @@ exports.default = new _MdComponent2.default({
 //
 
 /***/ }),
-/* 379 */
+/* 380 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableEmptyState.vue
-var MdTableEmptyState = __webpack_require__(381);
+var MdTableEmptyState = __webpack_require__(382);
 var MdTableEmptyState_default = /*#__PURE__*/__webpack_require__.n(MdTableEmptyState);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-6f84743a","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableEmptyState.vue
@@ -55323,7 +55778,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(380)
+  __webpack_require__(381)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -55331,7 +55786,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -55369,13 +55824,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 380 */
+/* 381 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 381 */
+/* 382 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55409,14 +55864,14 @@ exports.default = {
 };
 
 /***/ }),
-/* 382 */
+/* 383 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTableCell.vue
-var MdTableCell = __webpack_require__(384);
+var MdTableCell = __webpack_require__(385);
 var MdTableCell_default = /*#__PURE__*/__webpack_require__.n(MdTableCell);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-813d6b7e","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTableCell.vue
@@ -55447,7 +55902,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(383)
+  __webpack_require__(384)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -55455,7 +55910,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -55493,13 +55948,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 383 */
+/* 384 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 384 */
+/* 385 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55528,7 +55983,8 @@ exports.default = {
   inject: ['MdTable'],
   data: function data() {
     return {
-      index: null
+      index: null,
+      parentNode: null
     };
   },
   computed: {
@@ -55566,7 +56022,9 @@ exports.default = {
     updateAllCellData: function updateAllCellData() {
       var _this = this;
 
-      var cells = Array.from(this.$el.parentNode.childNodes).filter(function (_ref) {
+      this.MdTable.items = {};
+
+      var cells = Array.from(this.parentNode.childNodes).filter(function (_ref) {
         var tagName = _ref.tagName,
             classList = _ref.classList;
 
@@ -55586,19 +56044,29 @@ exports.default = {
     }
   },
   mounted: function mounted() {
+    this.parentNode = this.$el.parentNode;
+    this.updateAllCellData();
+  },
+  destroyed: function destroyed() {
+    var rowRemoved = this.$el.parentNode !== null;
+
+    if (rowRemoved) {
+      return false;
+    }
+
     this.updateAllCellData();
   }
 };
 
 /***/ }),
-/* 385 */
+/* 386 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTable/MdTablePagination.vue
-var MdTablePagination = __webpack_require__(387);
+var MdTablePagination = __webpack_require__(388);
 var MdTablePagination_default = /*#__PURE__*/__webpack_require__.n(MdTablePagination);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-4165698e","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTable/MdTablePagination.vue
@@ -55707,7 +56175,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(386)
+  __webpack_require__(387)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -55715,7 +56183,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -55753,13 +56221,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 386 */
+/* 387 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 387 */
+/* 388 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55858,7 +56326,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 388 */
+/* 389 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -55872,11 +56340,11 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdTabs = __webpack_require__(389);
+var _MdTabs = __webpack_require__(390);
 
 var _MdTabs2 = _interopRequireDefault(_MdTabs);
 
-var _MdTab = __webpack_require__(392);
+var _MdTab = __webpack_require__(393);
 
 var _MdTab2 = _interopRequireDefault(_MdTab);
 
@@ -55889,14 +56357,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 389 */
+/* 390 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTabs/MdTabs.vue
-var MdTabs = __webpack_require__(391);
+var MdTabs = __webpack_require__(392);
 var MdTabs_default = /*#__PURE__*/__webpack_require__.n(MdTabs);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-733c1bef","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTabs/MdTabs.vue
@@ -55910,7 +56378,11 @@ var render = function() {
     [
       _c(
         "div",
-        { staticClass: "md-tabs-navigation", class: _vm.navigationClasses },
+        {
+          ref: "navigation",
+          staticClass: "md-tabs-navigation",
+          class: _vm.navigationClasses
+        },
         [
           _vm._l(_vm.MdTabs.items, function(ref, index) {
             var label = ref.label
@@ -56021,7 +56493,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(390)
+  __webpack_require__(391)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -56029,7 +56501,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -56067,13 +56539,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 390 */
+/* 391 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 391 */
+/* 392 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -56180,7 +56652,8 @@ exports.default = new _MdComponent2.default({
       hasContent: false,
       MdTabs: {
         items: {}
-      }
+      },
+      alignmentChanging: false
     };
   },
   provide: function provide() {
@@ -56240,17 +56713,40 @@ exports.default = new _MdComponent2.default({
     },
     mdAlignment: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        var _this = this;
+
+        var cb;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.next = 2;
-                return this.$nextTick();
+                if (!this.alignmentChanging) {
+                  _context2.next = 2;
+                  break;
+                }
+
+                return _context2.abrupt('return', false);
 
               case 2:
-                this.setIndicatorStyles();
 
-              case 3:
+                this.alignmentChanging = true;
+                _context2.next = 5;
+                return this.$nextTick();
+
+              case 5:
+                cb = function cb(event) {
+                  if (event.propertyName !== 'min-width') {
+                    return false;
+                  }
+
+                  _this.$refs.navigation.removeEventListener('transitionend', cb);
+                  _this.setIndicatorStyles();
+                  _this.alignmentChanging = false;
+                };
+
+                this.$refs.navigation.addEventListener('transitionend', cb);
+
+              case 7:
               case 'end':
                 return _context2.stop();
             }
@@ -56297,7 +56793,7 @@ exports.default = new _MdComponent2.default({
       }
     },
     setActiveTabByRoute: function setActiveTabByRoute() {
-      var _this = this;
+      var _this2 = this;
 
       var _getItemsAndKeys2 = this.getItemsAndKeys(),
           items = _getItemsAndKeys2.items,
@@ -56310,7 +56806,7 @@ exports.default = new _MdComponent2.default({
           var item = items[key];
           var toProp = item.props.to;
 
-          if (toProp && toProp === _this.$route.path) {
+          if (toProp && toProp === _this2.$route.path) {
             tabIndex = index;
           }
         });
@@ -56332,7 +56828,7 @@ exports.default = new _MdComponent2.default({
       });
     },
     setIndicatorStyles: function setIndicatorStyles() {
-      var _this2 = this;
+      var _this3 = this;
 
       window.requestAnimationFrame(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
         var activeButton, buttonWidth, buttonLeft, indicatorLeft;
@@ -56341,27 +56837,27 @@ exports.default = new _MdComponent2.default({
             switch (_context3.prev = _context3.next) {
               case 0:
                 _context3.next = 2;
-                return _this2.$nextTick();
+                return _this3.$nextTick();
 
               case 2:
-                activeButton = _this2.$el.querySelector('.md-button.md-active');
+                activeButton = _this3.$el.querySelector('.md-button.md-active');
 
 
-                if (activeButton && _this2.$refs.indicator) {
+                if (activeButton && _this3.$refs.indicator) {
                   buttonWidth = activeButton.offsetWidth;
                   buttonLeft = activeButton.offsetLeft;
-                  indicatorLeft = _this2.$refs.indicator.offsetLeft;
+                  indicatorLeft = _this3.$refs.indicator.offsetLeft;
 
 
                   if (indicatorLeft < buttonLeft) {
-                    _this2.indicatorClass = 'md-tabs-indicator-right';
+                    _this3.indicatorClass = 'md-tabs-indicator-right';
                   } else {
-                    _this2.indicatorClass = 'md-tabs-indicator-left';
+                    _this3.indicatorClass = 'md-tabs-indicator-left';
                   }
 
-                  _this2.indicatorStyles = {
+                  _this3.indicatorStyles = {
                     left: buttonLeft + 'px',
-                    right: 'calc(100% - ' + (buttonWidth + buttonLeft) + 'px)'
+                    width: buttonWidth + 'px'
                   };
                 }
 
@@ -56370,7 +56866,7 @@ exports.default = new _MdComponent2.default({
                 return _context3.stop();
             }
           }
-        }, _callee3, _this2);
+        }, _callee3, _this3);
       })));
     },
     calculateTabPos: function calculateTabPos() {
@@ -56387,7 +56883,7 @@ exports.default = new _MdComponent2.default({
       }
     },
     setupObservers: function setupObservers() {
-      var _this3 = this;
+      var _this4 = this;
 
       if ('ResizeObserver' in window) {
         this.resizeObserver = new window.ResizeObserver(this.setIndicatorStyles);
@@ -56398,8 +56894,8 @@ exports.default = new _MdComponent2.default({
           characterData: true,
           subtree: true
         }, function () {
-          _this3.setIndicatorStyles();
-          _this3.calculateTabPos();
+          _this4.setIndicatorStyles();
+          _this4.calculateTabPos();
         });
 
         window.addEventListener('resize', this.setIndicatorStyles);
@@ -56424,7 +56920,7 @@ exports.default = new _MdComponent2.default({
   },
   mounted: function () {
     var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-      var _this4 = this;
+      var _this5 = this;
 
       return regeneratorRuntime.wrap(function _callee4$(_context4) {
         while (1) {
@@ -56450,9 +56946,9 @@ exports.default = new _MdComponent2.default({
               this.calculateTabPos();
 
               window.setTimeout(function () {
-                _this4.noTransition = false;
-                _this4.setupObservers();
-                _this4.setupWatchers();
+                _this5.noTransition = false;
+                _this5.setupObservers();
+                _this5.setupWatchers();
               }, 100);
 
             case 8:
@@ -56479,12 +56975,12 @@ exports.default = new _MdComponent2.default({
 });
 
 /***/ }),
-/* 392 */
+/* 393 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTab_vue__ = __webpack_require__(393);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTab_vue__ = __webpack_require__(394);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTab_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_bustCache_MdTab_vue__);
 var disposed = false
 var normalizeComponent = __webpack_require__(0)
@@ -56493,7 +56989,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 var __vue_template__ = null
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -56531,7 +57027,7 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 393 */
+/* 394 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -56675,7 +57171,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 394 */
+/* 395 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -56701,7 +57197,7 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 395 */
+/* 396 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -56715,7 +57211,7 @@ var _material = __webpack_require__(1);
 
 var _material2 = _interopRequireDefault(_material);
 
-var _MdTooltip = __webpack_require__(396);
+var _MdTooltip = __webpack_require__(397);
 
 var _MdTooltip2 = _interopRequireDefault(_MdTooltip);
 
@@ -56727,14 +57223,14 @@ exports.default = function (Vue) {
 };
 
 /***/ }),
-/* 396 */
+/* 397 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // EXTERNAL MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib/selector.js?type=script&index=0&bustCache!./src/components/MdTooltip/MdTooltip.vue
-var MdTooltip = __webpack_require__(398);
+var MdTooltip = __webpack_require__(399);
 var MdTooltip_default = /*#__PURE__*/__webpack_require__.n(MdTooltip);
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/template-compiler?{"id":"data-v-03252be9","hasScoped":false,"buble":{"transforms":{}}}!./node_modules/vue-loader/lib/selector.js?type=template&index=0&bustCache!./src/components/MdTooltip/MdTooltip.vue
@@ -56783,7 +57279,7 @@ if (false) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(397)
+  __webpack_require__(398)
 }
 var normalizeComponent = __webpack_require__(0)
 /* script */
@@ -56791,7 +57287,7 @@ var normalizeComponent = __webpack_require__(0)
 /* template */
 
 /* template functional */
-  var __vue_template_functional__ = false
+var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
@@ -56829,13 +57325,13 @@ if (false) {(function () {
 
 
 /***/ }),
-/* 397 */
+/* 398 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 398 */
+/* 399 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -56915,6 +57411,9 @@ exports.default = new _MdComponent2.default({
   watch: {
     mdActive: function mdActive() {
       this.shouldRender = this.mdActive;
+    },
+    shouldRender: function shouldRender(_shouldRender) {
+      this.$emit('update:mdActive', _shouldRender);
     }
   },
   methods: {
@@ -56922,7 +57421,6 @@ exports.default = new _MdComponent2.default({
       this.shouldRender = true;
     },
     hide: function hide() {
-      this.$emit('update:mdActive', false);
       this.shouldRender = false;
     }
   },
@@ -76268,6 +76766,37 @@ var spinal = function () {
 spinal.signOut = function () {
   window.localStorage.setItem("spinalhome_cfg", "");
 };
+
+// function load(path, callbackSuccess, callbackError) {
+//   if (this.models[path]) {
+//     if (!(this.models[path] instanceof Array)) {
+// callbackSuccess(this.models[path]);
+//     } else {
+//       this.models[path].push({
+//         success: callbackSuccess,
+//         error: callbackError
+//       });
+//     }
+//   } else {
+//     this.models[path] = [{
+//       success: callbackSuccess,
+//       error: callbackError
+//     }];
+//     spinalcore.load(conn, path, (model) => {
+//       let callback = this.models[path];
+//       this.models[path] = model;
+//       for (let i = 0; i < callback.length; i++) {
+//         callback[i].success(model);
+//       }
+//     }, () => {
+//       let callback = this.models[path];
+//       this.models[path] = undefined;
+//       for (let i = 0; i < callback.length; i++) {
+//         callback[i].error(model);
+//       }
+//     });
+//   }
+// }
 
 exports.default = spinal;
 
