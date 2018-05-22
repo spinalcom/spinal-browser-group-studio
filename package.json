@@ -1,6 +1,6 @@
 {
   "name": "spinal-browser-inspector",
-  "version": "v1.0.9",
+  "version": "v1.0.10",
   "description": "A spinalcore browser to do manual sorting of a Forgefile alertPlugin",
   "author": "laurent <htd.laurent@gmail.com>",
   "private": true,
@@ -9,7 +9,7 @@
     "dev": "npm run watch",
     "build": "node bin/build.js",
     "postinstall": "npm run spinal-register",
-    "spinal-register": "spinal-register"
+    "spinal-register": "spinal-register --browser 'spinal-browser-'"
   },
   "dependencies": {
     "spinal-browser-drive": "git+https://github.com/spinalcom/spinal-browser-drive.git",
