@@ -1,13 +1,13 @@
 import {} from "spinal-core-connectorjs";
-import * as Q from 'q';
+import * as Q from "q";
 
 function getParameterByName(name, url) {
   if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, "\\$&");
+  name = name.replace(/[[\]]/g, "\\$&");
   var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
     results = regex.exec(url);
   if (!results) return null;
-  if (!results[2]) return '';
+  if (!results[2]) return "";
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
@@ -22,20 +22,32 @@ class spinal {
   init() {
     let defer = Q.defer();
 
-    let user = this.getUser();
+    this.getUser();
     if (this.user.username) {
-      SpinalUserManager.get_user_id('http://' + window.location.host, this.user.username, this.user.password, (response) => {
+      SpinalUserManager.get_user_id(
+        "http://" + window.location.host,
+        this.user.username,
+        this.user.password,
+        response => {
           let id = parseInt(response);
-          this.conn = spinalCore.connect(`http://${id}:${this.user.password}@${window.location.host}/`);
+          this.conn = spinalCore.connect(
+            `http://${id}:${this.user.password}@${window.location.host}/`
+          );
           defer.resolve();
         },
         () => {
           window.location = "/html/drive/";
           // defer.reject();
-        });
-    } else
-      window.location = "/html/drive/";
+        }
+      );
+    } else window.location = "/html/drive/";
     return defer.promise;
+  }
+
+  getPath() {
+    let path = getParameterByName("path");
+    if (path) return atob(path);
+    return undefined;
   }
 
   getUser() {
@@ -51,29 +63,36 @@ class spinal {
   getModel() {
     let defer = Q.defer();
 
-    this.init().then(() => {
-      let path = getParameterByName("path");
-      if (!path) {
-        window.location = "/html/drive/";
-      }
-      path = atob(path);
-      spinalCore.load(this.conn, path, (forgefile) => {
-        if (forgefile.groupAlertPlugin) {
-          forgefile.groupAlertPlugin.load((model) => {
-            this.model = model;
-            defer.resolve(this.model);
-          });
-        } else
+    this.init().then(
+      () => {
+        let path = getParameterByName("path");
+        if (!path) {
           window.location = "/html/drive/";
-        // defer.reject();
-      }, () => {
+        }
+        path = atob(path);
+        spinalCore.load(
+          this.conn,
+          path,
+          forgefile => {
+            if (forgefile.groupAlertPlugin) {
+              forgefile.groupAlertPlugin.load(model => {
+                this.model = model;
+                defer.resolve(this.model);
+              });
+            } else window.location = "/html/drive/";
+            // defer.reject();
+          },
+          () => {
+            window.location = "/html/drive/";
+            // defer.reject();
+          }
+        );
+      },
+      () => {
         window.location = "/html/drive/";
         // defer.reject();
-      });
-    }, () => {
-      window.location = "/html/drive/";
-      // defer.reject();
-    });
+      }
+    );
 
     return defer.promise;
   }
@@ -81,7 +100,7 @@ class spinal {
 
 spinal.signOut = () => {
   window.localStorage.setItem("spinalhome_cfg", "");
-}
+};
 
 // function load(path, callbackSuccess, callbackError) {
 //   if (this.models[path]) {

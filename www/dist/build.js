@@ -76534,6 +76534,8 @@ exports.default = {
   data: function data() {
     var vm = this;
     return {
+      fullPath: "",
+      path: "",
       username: "",
       menuVisible: false,
       groupSelected: null,
@@ -76625,6 +76627,10 @@ exports.default = {
     var vm = this;
     var spinalIO = new _SpinalObject2.default();
     vm.username = spinalIO.getUser().username;
+    vm.fullPath = spinalIO.getPath();
+    var path = vm.fullPath.split("/");
+
+    vm.path = path[path.length - 1];
     spinalIO.getModel().then(function (alertPluginLst) {
       vm.model = alertPluginLst;
       alertPluginLst.bind(function () {
@@ -76639,7 +76645,7 @@ exports.default = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[_c('md-app',{attrs:{"md-mode":"reveal"}},[_c('md-app-toolbar',{staticClass:"app-header"},[_c('div',{staticClass:"md-toolbar-row"},[_c('div',{staticClass:"md-toolbar-section-start"},[_c('img',{staticStyle:{"height":"42px","margin-top":"4px"},attrs:{"src":"dist/assets/img/SpinalBIMInspectorLogo.png","alt":"SpinalBIM Inspector"}})]),_vm._v(" "),_c('div',{staticClass:"md-toolbar-section-end"},[_vm._v("\n            "+_vm._s(_vm.username)+"\n          "),_c('md-button',{staticClass:"md-icon-button",on:{"click":function($event){_vm.menuVisible = !_vm.menuVisible}}},[_c('md-icon',[_vm._v("menu")])],1)],1)])]),_vm._v(" "),_c('md-app-drawer',{staticClass:"md-right",attrs:{"md-active":_vm.menuVisible},on:{"update:mdActive":function($event){_vm.menuVisible=$event}}},[_c('md-toolbar',{staticClass:"app-header",attrs:{"md-elevation":"0"}},[_c('div',{staticClass:"md-toolbar-row"},[_c('div',{staticClass:"md-toolbar-section-start"},[_c('img',{staticStyle:{"height":"42px","margin-top":"4px"},attrs:{"src":"dist/assets/img/SpinalBIMInspectorLogo.png","alt":"SpinalBIM Inspector"}})]),_vm._v(" "),_c('div',{staticClass:"md-toolbar-section-end"},[_c('md-button',{staticClass:"md-icon-button",on:{"click":function($event){_vm.menuVisible = !_vm.menuVisible}}},[_c('md-icon',[_vm._v("menu")])],1)],1)])]),_vm._v(" "),_c('md-list',[_c('md-list-item',{on:{"click":_vm.go_toDrive}},[_c('md-icon',[_vm._v("keyboard_return")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v("Return to SpinalBIM Drive")])],1),_vm._v(" "),_c('md-list-item',{on:{"click":_vm.sign_out}},[_c('md-icon',[_vm._v("power_settings_new")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v("Sign out")])],1)],1)],1),_vm._v(" "),_c('md-app-content',[(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-active":_vm.showChart,"md-fullscreen":false},on:{"update:mdActive":function($event){_vm.showChart=$event}}},[_c('md-dialog-title',[_vm._v("Selected group : "+_vm._s(_vm.groupSelected.name)+"\n          ")]),_vm._v(" "),_c('md-dialog-content',[_c('Chart',{staticClass:"m_chart",attrs:{"data":_vm.chardata,"options":{responsive: true, maintainAspectRatio: false, legend: {labels : {fontColor : '#fff'}}}}})],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showChart = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-fullscreen":false,"md-active":_vm.showDialog},on:{"update:mdActive":function($event){_vm.showDialog=$event}}},[_c('md-dialog-title',[_vm._v("Select group : "+_vm._s(_vm.bimobjectSelected.name)+"\n          ")]),_vm._v(" "),_c('md-dialog-content',[_c('md-list',[_c('md-list-item',{on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, _vm.groupSelected.referencial)}}},[_c('md-icon',{style:(_vm.getColor(_vm.groupSelected.referencial))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(_vm.groupSelected.referencial.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === _vm.groupSelected.referencial.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1),_vm._v(" "),_vm._l((_vm.groupSelected.group),function(group){return _c('md-list-item',{key:group.id,on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, group)}}},[_c('md-icon',{style:(_vm.getColor(group))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(group.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === group.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1)})],2)],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showDialog = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),_c('md-list',_vm._l((_vm.groupLst),function(group){return _c('md-list-item',{key:group.id,attrs:{"md-expand":""}},[_c('md-icon',[_vm._v("label")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.name))]),_vm._v(" "),_c('md-button',{staticClass:"md-icon-button md-list-action",on:{"click":function($event){$event.stopPropagation();_vm.clicShowChart(group)}}},[_c('md-icon',[_vm._v("pie_chart")])],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},[_c('md-list-item',{staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(group.referencial))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.referencial.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(group.search),callback:function ($$v) {_vm.$set(group, "search", $$v)},expression:"group.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(group.referencial.allObject, group.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColorById(group, bimobject))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1),_vm._v(" "),_vm._l((group.group),function(subgroup){return _c('md-list-item',{key:subgroup.id,staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(subgroup.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(subgroup.search),callback:function ($$v) {_vm.$set(subgroup, "search", $$v)},expression:"subgroup.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(subgroup.allObject, subgroup.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1)})],2)],1)}))],1)],1)],1)}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[_c('md-app',{attrs:{"md-mode":"reveal"}},[_c('md-app-toolbar',{staticClass:"app-header"},[_c('div',{staticClass:"md-toolbar-row"},[_c('div',{staticClass:"md-toolbar-section-start"},[_c('img',{staticStyle:{"height":"42px","margin-top":"4px"},attrs:{"src":"dist/assets/img/SpinalBIMInspectorLogo.png","alt":"SpinalBIM Inspector"}})]),_vm._v(" "),_c('h2',[_vm._v("\n          "+_vm._s(_vm.path)+"\n          "),_c('md-tooltip',[_vm._v(_vm._s(_vm.fullPath))])],1),_vm._v(" "),_c('div',{staticClass:"md-toolbar-section-end"},[_vm._v("\n          "+_vm._s(_vm.username)+"\n          "),_c('md-button',{staticClass:"md-icon-button",on:{"click":function($event){_vm.menuVisible = !_vm.menuVisible}}},[_c('md-icon',[_vm._v("menu")])],1)],1)])]),_vm._v(" "),_c('md-app-drawer',{staticClass:"md-right",attrs:{"md-active":_vm.menuVisible},on:{"update:mdActive":function($event){_vm.menuVisible=$event}}},[_c('md-toolbar',{staticClass:"app-header",attrs:{"md-elevation":"0"}},[_c('div',{staticClass:"md-toolbar-row"},[_c('div',{staticClass:"md-toolbar-section-start"},[_c('img',{staticStyle:{"height":"42px","margin-top":"4px"},attrs:{"src":"dist/assets/img/SpinalBIMInspectorLogo.png","alt":"SpinalBIM Inspector"}})]),_vm._v(" "),_c('div',{staticClass:"md-toolbar-section-end"},[_c('md-button',{staticClass:"md-icon-button",on:{"click":function($event){_vm.menuVisible = !_vm.menuVisible}}},[_c('md-icon',[_vm._v("menu")])],1)],1)])]),_vm._v(" "),_c('md-list',[_c('md-list-item',{on:{"click":_vm.go_toDrive}},[_c('md-icon',[_vm._v("keyboard_return")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v("Return to SpinalBIM Drive")])],1),_vm._v(" "),_c('md-list-item',{on:{"click":_vm.sign_out}},[_c('md-icon',[_vm._v("power_settings_new")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v("Sign out")])],1)],1)],1),_vm._v(" "),_c('md-app-content',[(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-active":_vm.showChart,"md-fullscreen":false},on:{"update:mdActive":function($event){_vm.showChart=$event}}},[_c('md-dialog-title',[_vm._v("Selected group : "+_vm._s(_vm.groupSelected.name)+"\n        ")]),_vm._v(" "),_c('md-dialog-content',[_c('Chart',{staticClass:"m_chart",attrs:{"data":_vm.chardata,"options":{responsive: true, maintainAspectRatio: false, legend: {labels : {fontColor : '#fff'}}}}})],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showChart = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),(_vm.groupSelected)?_c('md-dialog',{attrs:{"md-fullscreen":false,"md-active":_vm.showDialog},on:{"update:mdActive":function($event){_vm.showDialog=$event}}},[_c('md-dialog-title',[_vm._v("Select group : "+_vm._s(_vm.bimobjectSelected.name)+"\n        ")]),_vm._v(" "),_c('md-dialog-content',[_c('md-list',[_c('md-list-item',{on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, _vm.groupSelected.referencial)}}},[_c('md-icon',{style:(_vm.getColor(_vm.groupSelected.referencial))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(_vm.groupSelected.referencial.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === _vm.groupSelected.referencial.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1),_vm._v(" "),_vm._l((_vm.groupSelected.group),function(group){return _c('md-list-item',{key:group.id,on:{"click":function($event){_vm.triItem(_vm.bimobjectSelected, group)}}},[_c('md-icon',{style:(_vm.getColor(group))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(" "+_vm._s(group.name))]),_vm._v(" "),(_vm.bimobjectSelected.group === group.id)?_c('md-icon',[_vm._v("check")]):_vm._e()],1)})],2)],1),_vm._v(" "),_c('md-dialog-actions',[_c('md-button',{staticClass:"md-primary",on:{"click":function($event){_vm.showDialog = false}}},[_vm._v("Close")])],1)],1):_vm._e(),_vm._v(" "),_c('md-list',[(_vm.groupLst.length == 0)?_c('md-empty-state',{attrs:{"md-rounded":"","md-icon":"menu","md-label":"Nothing in Inspector","md-description":"You can create your group in Inspector of the viewer."}}):_vm._e(),_vm._v(" "),_vm._l((_vm.groupLst),function(group){return _c('md-list-item',{key:group.id,attrs:{"md-expand":""}},[_c('md-icon',[_vm._v("label")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.name))]),_vm._v(" "),_c('md-button',{staticClass:"md-icon-button md-list-action",on:{"click":function($event){$event.stopPropagation();_vm.clicShowChart(group)}}},[_c('md-icon',[_vm._v("pie_chart")])],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},[_c('md-list-item',{staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(group.referencial))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(group.referencial.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(group.search),callback:function ($$v) {_vm.$set(group, "search", $$v)},expression:"group.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(group.referencial.allObject, group.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColorById(group, bimobject))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1),_vm._v(" "),_vm._l((group.group),function(subgroup){return _c('md-list-item',{key:subgroup.id,staticClass:"md-inset",attrs:{"md-expand":""}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("label_outline")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(subgroup.name))]),_vm._v(" "),_c('md-field',{staticClass:"search-bar",attrs:{"md-inline":"","md-clearable":""}},[_c('label',[_vm._v("Search")]),_vm._v(" "),_c('md-input',{on:{"click":function($event){$event.stopPropagation();}},model:{value:(subgroup.search),callback:function ($$v) {_vm.$set(subgroup, "search", $$v)},expression:"subgroup.search"}})],1),_vm._v(" "),_c('md-list',{attrs:{"slot":"md-expand"},slot:"md-expand"},_vm._l((_vm.filteredSubGrp(subgroup.allObject, subgroup.search)),function(bimobject){return _c('md-list-item',{key:bimobject.id,staticClass:"md-inset spinal-inset2",on:{"click":function($event){_vm.clicItem(group, bimobject)}}},[_c('md-icon',{style:(_vm.getColor(subgroup))},[_vm._v("turned_in")]),_vm._v(" "),_c('span',{staticClass:"md-list-item-text"},[_vm._v(_vm._s(bimobject.dbId)+" - "+_vm._s(bimobject.name))])],1)}))],1)})],2)],1)})],2)],1)],1)],1)}
 __vue__options__.staticRenderFns = []
 __vue__options__._scopeId = "data-v-67437e69"
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
@@ -76674,11 +76680,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function getParameterByName(name, url) {
   if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, "\\$&");
+  name = name.replace(/[[\]]/g, "\\$&");
   var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
       results = regex.exec(url);
   if (!results) return null;
-  if (!results[2]) return '';
+  if (!results[2]) return "";
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
@@ -76699,9 +76705,9 @@ var spinal = function () {
 
       var defer = Q.defer();
 
-      var user = this.getUser();
+      this.getUser();
       if (this.user.username) {
-        SpinalUserManager.get_user_id('http://' + window.location.host, this.user.username, this.user.password, function (response) {
+        SpinalUserManager.get_user_id("http://" + window.location.host, this.user.username, this.user.password, function (response) {
           var id = parseInt(response);
           _this.conn = spinalCore.connect("http://" + id + ":" + _this.user.password + "@" + window.location.host + "/");
           defer.resolve();
@@ -76711,6 +76717,13 @@ var spinal = function () {
         });
       } else window.location = "/html/drive/";
       return defer.promise;
+    }
+  }, {
+    key: "getPath",
+    value: function getPath() {
+      var path = getParameterByName("path");
+      if (path) return atob(path);
+      return undefined;
     }
   }, {
     key: "getUser",
@@ -76801,17 +76814,17 @@ exports.default = spinal;
 
 },{}],78:[function(require,module,exports){
 ;(function(){
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _vueChartjs = require('vue-chartjs');
+var _vueChartjs = require("vue-chartjs");
 
 exports.default = {
   extends: _vueChartjs.Doughnut,
-  props: ['data', 'options'],
+  props: ["data", "options"],
   mounted: function mounted() {
     this.renderChart(this.data, this.options);
   }
@@ -76830,28 +76843,28 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   }
 })()}
 },{"vue":71,"vue-chartjs":68,"vue-hot-reload-api":69}],79:[function(require,module,exports){
-'use strict';
+"use strict";
 
-var _vue = require('vue');
+var _vue = require("vue");
 
 var _vue2 = _interopRequireDefault(_vue);
 
-var _App = require('./App.vue');
+var _App = require("./App.vue");
 
 var _App2 = _interopRequireDefault(_App);
 
-var _vueMaterial = require('vue-material');
+var _vueMaterial = require("vue-material");
 
 var _vueMaterial2 = _interopRequireDefault(_vueMaterial);
 
-require('./app.css');
+require("./app.css");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _vue2.default.use(_vueMaterial2.default);
 
 new _vue2.default({
-  el: '#app',
+  el: "#app",
   render: function render(h) {
     return h(_App2.default);
   }

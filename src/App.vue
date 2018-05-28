@@ -1,28 +1,41 @@
 <template>
-  <div id="app" v-cloak>
+  <div id="app"
+       v-cloak>
     <md-app md-mode="reveal">
       <md-app-toolbar class="app-header">
         <div class="md-toolbar-row">
           <div class="md-toolbar-section-start">
-            <img src="dist/assets/img/SpinalBIMInspectorLogo.png" alt="SpinalBIM Inspector" style="height: 42px;margin-top: 4px;">
+            <img src="dist/assets/img/SpinalBIMInspectorLogo.png"
+                 alt="SpinalBIM Inspector"
+                 style="height: 42px;margin-top: 4px;">
           </div>
+          <h2>
+            {{path}}
+            <md-tooltip>{{fullPath}}</md-tooltip>
+          </h2>
           <div class="md-toolbar-section-end">
-              {{username}}
-            <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
+            {{username}}
+            <md-button class="md-icon-button"
+                       @click="menuVisible = !menuVisible">
               <md-icon>menu</md-icon>
             </md-button>
           </div>
         </div>
       </md-app-toolbar>
 
-      <md-app-drawer class="md-right" :md-active.sync="menuVisible">
-        <md-toolbar class="app-header" md-elevation="0">
+      <md-app-drawer class="md-right"
+                     :md-active.sync="menuVisible">
+        <md-toolbar class="app-header"
+                    md-elevation="0">
           <div class="md-toolbar-row">
             <div class="md-toolbar-section-start">
-              <img src="dist/assets/img/SpinalBIMInspectorLogo.png" alt="SpinalBIM Inspector" style="height: 42px;margin-top: 4px;">
+              <img src="dist/assets/img/SpinalBIMInspectorLogo.png"
+                   alt="SpinalBIM Inspector"
+                   style="height: 42px;margin-top: 4px;">
             </div>
             <div class="md-toolbar-section-end">
-              <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
+              <md-button class="md-icon-button"
+                         @click="menuVisible = !menuVisible">
                 <md-icon>menu</md-icon>
               </md-button>
             </div>
@@ -35,7 +48,6 @@
             <span class="md-list-item-text">Return to SpinalBIM Drive</span>
           </md-list-item>
 
-          
           <md-list-item @click="sign_out">
             <md-icon>power_settings_new</md-icon>
             <span class="md-list-item-text">Sign out</span>
@@ -44,79 +56,112 @@
       </md-app-drawer>
 
       <md-app-content>
-        <md-dialog v-if="groupSelected" :md-active.sync="showChart" :md-fullscreen=false>
-            <md-dialog-title>Selected group : {{groupSelected.name}}
-            </md-dialog-title>
-            <md-dialog-content>
-              <Chart class="m_chart" :data="chardata"
-              :options="{responsive: true, maintainAspectRatio: false, legend: {labels : {fontColor : '#fff'}}}"
-              />
-            </md-dialog-content>
-            <md-dialog-actions>
-              <md-button class="md-primary" @click="showChart = false">Close</md-button>
-            </md-dialog-actions>
+        <md-dialog v-if="groupSelected"
+                   :md-active.sync="showChart"
+                   :md-fullscreen=false>
+          <md-dialog-title>Selected group : {{groupSelected.name}}
+          </md-dialog-title>
+          <md-dialog-content>
+            <Chart class="m_chart"
+                   :data="chardata"
+                   :options="{responsive: true, maintainAspectRatio: false, legend: {labels : {fontColor : '#fff'}}}"
+            />
+          </md-dialog-content>
+          <md-dialog-actions>
+            <md-button class="md-primary"
+                       @click="showChart = false">Close</md-button>
+          </md-dialog-actions>
         </md-dialog>
 
+        <md-dialog v-if="groupSelected"
+                   :md-fullscreen=false
+                   :md-active.sync="showDialog">
+          <md-dialog-title>Select group : {{bimobjectSelected.name}}
+          </md-dialog-title>
+          <md-dialog-content>
+            <md-list>
+              <md-list-item @click="triItem(bimobjectSelected, groupSelected.referencial)">
+                <md-icon :style="getColor(groupSelected.referencial)">turned_in</md-icon>
+                <span class="md-list-item-text"> {{groupSelected.referencial.name}}</span>
+                <md-icon v-if="bimobjectSelected.group === groupSelected.referencial.id">check</md-icon>
+              </md-list-item>
 
-        <md-dialog v-if="groupSelected" :md-fullscreen=false :md-active.sync="showDialog">
-            <md-dialog-title>Select group : {{bimobjectSelected.name}}
-            </md-dialog-title>
-            <md-dialog-content>
-              <md-list>
-                <md-list-item @click="triItem(bimobjectSelected, groupSelected.referencial)">
-                  <md-icon :style="getColor(groupSelected.referencial)">turned_in</md-icon>
-                  <span class="md-list-item-text"> {{groupSelected.referencial.name}}</span>
-                  <md-icon v-if="bimobjectSelected.group === groupSelected.referencial.id">check</md-icon>
-                </md-list-item>
+              <md-list-item v-for="group in groupSelected.group"
+                            v-bind:key="group.id"
+                            @click="triItem(bimobjectSelected, group)">
+                <md-icon :style="getColor(group)">turned_in</md-icon>
+                <span class="md-list-item-text"> {{group.name}}</span>
+                <md-icon v-if="bimobjectSelected.group === group.id">check</md-icon>
 
-                <md-list-item v-for="group in groupSelected.group" v-bind:key="group.id" @click="triItem(bimobjectSelected, group)">
-                  <md-icon :style="getColor(group)">turned_in</md-icon>
-                  <span class="md-list-item-text"> {{group.name}}</span>
-                  <md-icon v-if="bimobjectSelected.group === group.id">check</md-icon>
-                    
-                </md-list-item>
-              </md-list>
-            </md-dialog-content>
-            <md-dialog-actions>
-              <md-button class="md-primary" @click="showDialog = false">Close</md-button>
-            </md-dialog-actions>
+              </md-list-item>
+            </md-list>
+          </md-dialog-content>
+          <md-dialog-actions>
+            <md-button class="md-primary"
+                       @click="showDialog = false">Close</md-button>
+          </md-dialog-actions>
         </md-dialog>
 
         <md-list>
-          <md-list-item v-for="group in groupLst" v-bind:key="group.id" md-expand>
+          <md-empty-state v-if="groupLst.length == 0"
+                          md-rounded
+                          md-icon="menu"
+                          md-label="Nothing in Inspector"
+                          md-description="You can create your group in Inspector of the viewer.">
+          </md-empty-state>
+          <md-list-item v-for="group in groupLst"
+                        v-bind:key="group.id"
+                        md-expand>
             <md-icon>label</md-icon>
             <span class="md-list-item-text">{{group.name}}</span>
-            <md-button class="md-icon-button md-list-action" v-on:click.stop="clicShowChart(group)">
+            <md-button class="md-icon-button md-list-action"
+                       v-on:click.stop="clicShowChart(group)">
               <md-icon>pie_chart</md-icon>
             </md-button>
 
             <md-list slot="md-expand">
-              <md-list-item class="md-inset" md-expand>
+              <md-list-item class="md-inset"
+                            md-expand>
                 <md-icon :style="getColor(group.referencial)">label_outline</md-icon>
                 <span class="md-list-item-text">{{group.referencial.name}}</span>
-                <md-field class="search-bar" md-inline md-clearable>
+                <md-field class="search-bar"
+                          md-inline
+                          md-clearable>
                   <label>Search</label>
-                  <md-input v-model="group.search" v-on:click.stop></md-input>
+                  <md-input v-model="group.search"
+                            v-on:click.stop></md-input>
                 </md-field>
                 <md-list slot="md-expand">
-                  <md-list-item class="md-inset spinal-inset2" v-for="bimobject in filteredSubGrp(group.referencial.allObject, group.search)" v-bind:key="bimobject.id"
-                  @click="clicItem(group, bimobject)">
+                  <md-list-item class="md-inset spinal-inset2"
+                                v-for="bimobject in filteredSubGrp(group.referencial.allObject, group.search)"
+                
+                                v-bind:key="bimobject.id"
+                                @click="clicItem(group, bimobject)">
                     <md-icon :style="getColorById(group, bimobject)">turned_in</md-icon>
                     <span class="md-list-item-text">{{bimobject.dbId}} - {{bimobject.name}}</span>
                   </md-list-item>
                 </md-list>
               </md-list-item>
 
-              <md-list-item class="md-inset" v-for="subgroup in group.group" v-bind:key="subgroup.id" md-expand>
+              <md-list-item class="md-inset"
+                            v-for="subgroup in group.group"
+                            v-bind:key="subgroup.id"
+                            md-expand>
                 <md-icon :style="getColor(subgroup)">label_outline</md-icon>
                 <span class="md-list-item-text">{{subgroup.name}}</span>
-                <md-field class="search-bar" md-inline md-clearable>
+                <md-field class="search-bar"
+                          md-inline
+                          md-clearable>
                   <label>Search</label>
-                  <md-input v-model="subgroup.search" v-on:click.stop></md-input>
+                  <md-input v-model="subgroup.search"
+                            v-on:click.stop></md-input>
                 </md-field>
                 <md-list slot="md-expand">
-                  <md-list-item class="md-inset spinal-inset2" v-for="bimobject in filteredSubGrp(subgroup.allObject, subgroup.search)" v-bind:key="bimobject.id"
-                  @click="clicItem(group, bimobject)">
+                  <md-list-item class="md-inset spinal-inset2"
+                                v-for="bimobject in filteredSubGrp(subgroup.allObject, subgroup.search)"
+                
+                                v-bind:key="bimobject.id"
+                                @click="clicItem(group, bimobject)">
                     <md-icon :style="getColor(subgroup)">turned_in</md-icon>
                     <span class="md-list-item-text">{{bimobject.dbId}} - {{bimobject.name}}</span>
                   </md-list-item>
@@ -156,6 +201,8 @@ export default {
   data() {
     var vm = this;
     return {
+      fullPath: "",
+      path: "",
       username: "",
       menuVisible: false,
       groupSelected: null,
@@ -269,6 +316,10 @@ export default {
     var vm = this;
     let spinalIO = new spinal();
     vm.username = spinalIO.getUser().username;
+    vm.fullPath = spinalIO.getPath();
+    let path = vm.fullPath.split("/");
+
+    vm.path = path[path.length - 1];
     spinalIO.getModel().then(alertPluginLst => {
       vm.model = alertPluginLst;
       alertPluginLst.bind(() => {

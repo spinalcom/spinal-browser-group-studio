@@ -1,6 +1,6 @@
 {
   "name": "spinal-browser-inspector",
-  "version": "v1.0.10",
+  "version": "v1.0.11",
   "description": "A spinalcore browser to do manual sorting of a Forgefile alertPlugin",
   "author": "laurent <htd.laurent@gmail.com>",
   "private": true,
